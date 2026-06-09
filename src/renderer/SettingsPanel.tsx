@@ -182,7 +182,10 @@ export function SettingsPanel({
         </label>
 
         <label>
-          Font size
+          <span className="setting-label-row">
+            <span>Font size</span>
+            <span className="setting-value">{draft.fontSize}px</span>
+          </span>
           <input
             type="number"
             min="10"
@@ -343,7 +346,12 @@ export function SettingsPanel({
         )}
 
         <label>
-          Opacity
+          <span className="setting-label-row">
+            <span>Opacity</span>
+            <span className="setting-value">
+              {formatOpacity(draft.appearance.background.opacity)}
+            </span>
+          </span>
           <input
             type="range"
             min="0"
@@ -357,7 +365,12 @@ export function SettingsPanel({
         </label>
 
         <label>
-          Blur
+          <span className="setting-label-row">
+            <span>Blur</span>
+            <span className="setting-value">
+              {draft.appearance.background.blur}px
+            </span>
+          </span>
           <input
             type="range"
             min="0"
@@ -444,4 +457,8 @@ function configsAreDifferent(
   secondConfig: MorphTermConfig
 ): boolean {
   return JSON.stringify(firstConfig) !== JSON.stringify(secondConfig);
+}
+
+function formatOpacity(opacity: number): string {
+  return opacity.toFixed(2).replace(/0$/, "");
 }
