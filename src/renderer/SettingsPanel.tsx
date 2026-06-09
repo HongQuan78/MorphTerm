@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
@@ -41,30 +41,29 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const [draft, setDraft] = useState<MorphTermConfig>(config);
   const [status, setStatus] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const savedConfigRef = useRef<MorphTermConfig>(config);
   const gradientDraft = useMemo(
     () => parseGradient(draft.appearance.background.value),
     [draft.appearance.background.value]
   );
 
   useEffect(() => {
-    setDraft(config);
-  }, [config]);
+    if (!hasUnsavedChanges) {
+      savedConfigRef.current = config;
+      setDraft(config);
+    }
+  }, [config, hasUnsavedChanges]);
 
   if (!isOpen) {
     return null;
   }
 
-  const saveConfig = async (nextConfig: MorphTermConfig) => {
+  const updateDraft = (nextConfig: MorphTermConfig) => {
     setDraft(nextConfig);
     onConfigChange(nextConfig);
-    const savedConfig = await window.morphTerm.config.update(nextConfig);
-    onConfigChange(savedConfig);
-    setStatus("Saved");
-    window.setTimeout(() => setStatus(""), 1000);
-  };
-
-  const updateDraft = (nextConfig: MorphTermConfig) => {
-    void saveConfig(nextConfig);
+    setHasUnsavedChanges(true);
+    setStatus("Unsaved changes");
   };
 
   const updateBackground = (background: Partial<MorphTermBackgroundConfig>) => {
@@ -130,6 +129,30 @@ export function SettingsPanel({
     } catch (error) {
       setStatus(`Browse failed: ${String(error)}`);
     }
+  };
+
+  const saveChanges = async () => {
+    try {
+      setStatus("Saving...");
+      const savedConfig = await window.morphTerm.config.update(draft);
+      savedConfigRef.current = savedConfig;
+      onConfigChange(savedConfig);
+      setDraft(savedConfig);
+      setHasUnsavedChanges(false);
+      setStatus("Saved");
+      window.setTimeout(() => setStatus(""), 1000);
+    } catch (error) {
+      setStatus(`Save failed: ${String(error)}`);
+    }
+  };
+
+  const resetChanges = () => {
+    const savedConfig = savedConfigRef.current;
+
+    setDraft(savedConfig);
+    onConfigChange(savedConfig);
+    setHasUnsavedChanges(false);
+    setStatus("");
   };
 
   return (
@@ -375,7 +398,25 @@ export function SettingsPanel({
         >
           Open config file
         </button>
-        {status && <span className="settings-status">{status}</span>}
+        <div className="settings-actions">
+          {status && <span className="settings-status">{status}</span>}
+          <button
+            type="button"
+            className="ghost-button"
+            disabled={!hasUnsavedChanges}
+            onClick={resetChanges}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            disabled={!hasUnsavedChanges}
+            onClick={() => void saveChanges()}
+          >
+            Save
+          </button>
+        </div>
       </footer>
     </aside>
   );

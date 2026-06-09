@@ -177,6 +177,17 @@ select {
   background: rgba(30, 41, 59, 0.88);
 }
 
+.primary-button {
+  border-color: rgba(136, 192, 208, 0.52);
+  color: #0f172a;
+  background: #8fbcbb;
+}
+
+.settings-panel button:disabled {
+  opacity: 0.44;
+  cursor: not-allowed;
+}
+
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -228,6 +239,13 @@ select {
   gap: 12px;
   padding-top: 14px;
   border-top: 1px solid rgba(236, 239, 244, 0.1);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .settings-status {
