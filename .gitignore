@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .fluxterm-dev/
+.morphterm-dev/
 
 .DS_Store
 npm-debug.log*
