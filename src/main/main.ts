@@ -1,11 +1,14 @@
 import { app, BrowserWindow } from "electron";
 import path from "node:path";
+import { ConfigManager } from "./ConfigManager";
 import { TerminalManager } from "./TerminalManager";
+import { registerConfigIpc } from "./registerConfigIpc";
 import { registerTerminalIpc } from "./registerTerminalIpc";
 import { appInfo } from "../shared/appInfo";
 
 const rendererDevUrl = "http://127.0.0.1:5173";
 const terminalManager = new TerminalManager();
+let configManager: ConfigManager;
 
 if (!app.isPackaged) {
   app.setPath("userData", path.join(process.cwd(), ".fluxterm-dev"));
@@ -40,6 +43,9 @@ function createMainWindow(): void {
 }
 
 app.on("ready", () => {
+  configManager = new ConfigManager(app.getPath("userData"));
+  configManager.load();
+  registerConfigIpc(configManager);
   registerTerminalIpc(terminalManager);
   createMainWindow();
 });

@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { appInfo } from "../shared/appInfo";
+import { configChannels } from "../shared/config/config-ipc";
 import { terminalChannels } from "../shared/terminalIpc";
+import type {
+  FluxTermConfig,
+  FluxTermConfigUpdate
+} from "../shared/config/config-types";
 import type {
   TerminalCreateRequest,
   TerminalCreateResult,
@@ -13,6 +18,17 @@ import type {
 const fluxTermApi = {
   appInfo,
   platform: process.platform,
+  config: {
+    get(): Promise<FluxTermConfig> {
+      return ipcRenderer.invoke(configChannels.get);
+    },
+    update(update: FluxTermConfigUpdate): Promise<FluxTermConfig> {
+      return ipcRenderer.invoke(configChannels.update, update);
+    },
+    openConfigFile(): Promise<void> {
+      return ipcRenderer.invoke(configChannels.openConfigFile);
+    }
+  },
   terminal: {
     create(request?: TerminalCreateRequest): Promise<TerminalCreateResult> {
       return ipcRenderer.invoke(terminalChannels.create, request);

@@ -25,12 +25,13 @@ export class TerminalManager {
     options: TerminalCreateRequest = {}
   ): TerminalCreateResult {
     const shell = getDefaultShell();
-    const terminalProcess = pty.spawn(shell, [], {
+    const terminalProcess = pty.spawn(shell, getDefaultShellArgs(), {
       name: "xterm-256color",
       cols: options.cols ?? 80,
       rows: options.rows ?? 24,
       cwd: getDefaultWorkingDirectory(),
-      env: process.env
+      env: process.env,
+      useConpty: false
     });
     const id = crypto.randomUUID();
 
@@ -111,6 +112,20 @@ function getDefaultShell(): string {
   }
 
   return process.env.SHELL || "/bin/bash";
+}
+
+function getDefaultShellArgs(): string[] {
+  if (process.platform === "win32") {
+    return [
+      "-NoLogo",
+      "-NoProfile",
+      "-NoExit",
+      "-Command",
+      "Set-PSReadLineOption -HistorySaveStyle SaveNothing"
+    ];
+  }
+
+  return [];
 }
 
 function getDefaultWorkingDirectory(): string {
