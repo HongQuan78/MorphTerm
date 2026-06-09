@@ -8,6 +8,8 @@ import type { EffectLayerHandle } from "./EffectLayer";
 import { defaultConfig } from "../shared/config/default-config";
 import type { MorphTermConfig } from "../shared/config/config-types";
 
+const terminalSessionStorageKey = "morphterm:terminal-session-id";
+
 export function TerminalView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const effectLayerRef = useRef<EffectLayerHandle | null>(null);
@@ -222,19 +224,21 @@ export function TerminalView() {
         focusTerminal();
       });
 
-      void window.morphTerm.terminal
-        .create({
-          cols: terminal.cols,
-          rows: terminal.rows
-        })
+      void connectTerminalSession(terminal)
         .then((session) => {
+          sessionStorage.setItem(terminalSessionStorageKey, session.id);
+
           if (disposed) {
-            void window.morphTerm.terminal.dispose({ id: session.id });
             return;
           }
 
           sessionId = session.id;
           sessionIdRef.current = session.id;
+
+          if (session.history) {
+            terminal?.write(session.history);
+          }
+
           resizeTerminal();
           focusTerminal();
         })
@@ -249,10 +253,6 @@ export function TerminalView() {
         terminalContainer.removeEventListener("pointerdown", focusTerminal);
         removeDataListener();
         inputDisposable.dispose();
-
-        if (sessionId) {
-          void window.morphTerm.terminal.dispose({ id: sessionId });
-        }
 
         terminal?.dispose();
         terminal = null;
@@ -331,4 +331,28 @@ function getCursorEffectOrigin(
     x: 18,
     y: 24
   };
+}
+
+async function connectTerminalSession(terminal: Terminal): Promise<{
+  id: string;
+  history?: string;
+}> {
+  const storedSessionId = sessionStorage.getItem(terminalSessionStorageKey);
+
+  if (storedSessionId) {
+    try {
+      return await window.morphTerm.terminal.attach({
+        id: storedSessionId,
+        cols: terminal.cols,
+        rows: terminal.rows
+      });
+    } catch {
+      sessionStorage.removeItem(terminalSessionStorageKey);
+    }
+  }
+
+  return window.morphTerm.terminal.create({
+    cols: terminal.cols,
+    rows: terminal.rows
+  });
 }

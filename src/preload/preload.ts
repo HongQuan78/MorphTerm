@@ -7,6 +7,8 @@ import type {
   MorphTermConfigUpdate
 } from "../shared/config/config-types";
 import type {
+  TerminalAttachRequest,
+  TerminalAttachResult,
   TerminalCreateRequest,
   TerminalCreateResult,
   TerminalDataEvent,
@@ -38,6 +40,9 @@ const morphTermApi = {
   terminal: {
     create(request?: TerminalCreateRequest): Promise<TerminalCreateResult> {
       return ipcRenderer.invoke(terminalChannels.create, request);
+    },
+    attach(request: TerminalAttachRequest): Promise<TerminalAttachResult> {
+      return ipcRenderer.invoke(terminalChannels.attach, request);
     },
     write(request: TerminalWriteRequest): Promise<void> {
       return ipcRenderer.invoke(terminalChannels.write, request);

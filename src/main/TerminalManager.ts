@@ -5,14 +5,20 @@ import type { IDisposable, IPty } from "node-pty";
 import * as pty from "node-pty";
 import { terminalChannels } from "../shared/terminalIpc";
 import type {
+  TerminalAttachRequest,
+  TerminalAttachResult,
   TerminalCreateRequest,
   TerminalCreateResult
 } from "../shared/terminalIpc";
+
+const maxSessionHistoryLength = 200_000;
 
 interface TerminalSession {
   id: string;
   process: IPty;
   shell: string;
+  webContents: WebContents;
+  history: string;
   dataSubscription: IDisposable;
   exitSubscription: IDisposable;
 }
@@ -36,8 +42,16 @@ export class TerminalManager {
     const id = crypto.randomUUID();
 
     const dataSubscription = terminalProcess.onData((data) => {
-      if (!webContents.isDestroyed()) {
-        webContents.send(terminalChannels.data, { id, data });
+      const session = this.sessions.get(id);
+
+      if (!session) {
+        return;
+      }
+
+      session.history = appendHistory(session.history, data);
+
+      if (!session.webContents.isDestroyed()) {
+        session.webContents.send(terminalChannels.data, { id, data });
       }
     });
 
@@ -49,6 +63,8 @@ export class TerminalManager {
       id,
       process: terminalProcess,
       shell,
+      webContents,
+      history: "",
       dataSubscription,
       exitSubscription
     });
@@ -56,7 +72,30 @@ export class TerminalManager {
     return {
       id,
       pid: terminalProcess.pid,
-      shell
+      shell,
+      history: ""
+    };
+  }
+
+  attach(
+    webContents: WebContents,
+    options: TerminalAttachRequest
+  ): TerminalAttachResult {
+    const session = this.getSession(options.id);
+    session.webContents = webContents;
+
+    if (options.cols && options.rows) {
+      session.process.resize(
+        normalizeDimension(options.cols),
+        normalizeDimension(options.rows)
+      );
+    }
+
+    return {
+      id: session.id,
+      pid: session.process.pid,
+      shell: session.shell,
+      history: session.history
     };
   }
 
@@ -138,4 +177,14 @@ function normalizeDimension(value: number): number {
   }
 
   return Math.floor(value);
+}
+
+function appendHistory(history: string, data: string): string {
+  const nextHistory = history + data;
+
+  if (nextHistory.length <= maxSessionHistoryLength) {
+    return nextHistory;
+  }
+
+  return nextHistory.slice(nextHistory.length - maxSessionHistoryLength);
 }

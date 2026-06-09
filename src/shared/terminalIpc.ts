@@ -1,5 +1,6 @@
 export const terminalChannels = {
   create: "terminal:create",
+  attach: "terminal:attach",
   write: "terminal:write",
   resize: "terminal:resize",
   dispose: "terminal:dispose",
@@ -18,6 +19,20 @@ export interface TerminalCreateResult {
   id: string;
   pid: number;
   shell: string;
+  history?: string;
+}
+
+export interface TerminalAttachRequest {
+  id: string;
+  cols?: number;
+  rows?: number;
+}
+
+export interface TerminalAttachResult {
+  id: string;
+  pid: number;
+  shell: string;
+  history: string;
 }
 
 export interface TerminalWriteRequest {

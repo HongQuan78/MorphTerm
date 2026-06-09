@@ -2,6 +2,7 @@ import { ipcMain } from "electron";
 import { TerminalManager } from "./TerminalManager";
 import { terminalChannels } from "../shared/terminalIpc";
 import type {
+  TerminalAttachRequest,
   TerminalCreateRequest,
   TerminalDisposeRequest,
   TerminalResizeRequest,
@@ -13,6 +14,13 @@ export function registerTerminalIpc(terminalManager: TerminalManager): void {
     terminalChannels.create,
     (event, request?: TerminalCreateRequest) => {
       return terminalManager.create(event.sender, request);
+    }
+  );
+
+  ipcMain.handle(
+    terminalChannels.attach,
+    (event, request: TerminalAttachRequest) => {
+      return terminalManager.attach(event.sender, request);
     }
   );
 
