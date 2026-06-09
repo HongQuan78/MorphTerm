@@ -13,6 +13,7 @@ import type {
   TerminalCreateResult,
   TerminalDataEvent,
   TerminalDisposeRequest,
+  TerminalExitEvent,
   TerminalResizeRequest,
   TerminalWriteRequest
 } from "../shared/terminalIpc";
@@ -62,6 +63,17 @@ const morphTermApi = {
 
       return () => {
         ipcRenderer.removeListener(terminalChannels.data, listener);
+      };
+    },
+    onExit(callback: (event: TerminalExitEvent) => void): () => void {
+      const listener = (_event: Electron.IpcRendererEvent, data: TerminalExitEvent) => {
+        callback(data);
+      };
+
+      ipcRenderer.on(terminalChannels.exit, listener);
+
+      return () => {
+        ipcRenderer.removeListener(terminalChannels.exit, listener);
       };
     }
   }

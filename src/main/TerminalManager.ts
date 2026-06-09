@@ -55,7 +55,17 @@ export class TerminalManager {
       }
     });
 
-    const exitSubscription = terminalProcess.onExit(() => {
+    const exitSubscription = terminalProcess.onExit((event) => {
+      const session = this.sessions.get(id);
+
+      if (session && !session.webContents.isDestroyed()) {
+        session.webContents.send(terminalChannels.exit, {
+          id,
+          exitCode: event.exitCode,
+          signal: event.signal
+        });
+      }
+
       this.removeSession(id, false);
     });
 

@@ -4,7 +4,8 @@ export const terminalChannels = {
   write: "terminal:write",
   resize: "terminal:resize",
   dispose: "terminal:dispose",
-  data: "terminal:data"
+  data: "terminal:data",
+  exit: "terminal:exit"
 } as const;
 
 export type TerminalChannel =
@@ -53,4 +54,10 @@ export interface TerminalDisposeRequest {
 export interface TerminalDataEvent {
   id: string;
   data: string;
+}
+
+export interface TerminalExitEvent {
+  id: string;
+  exitCode: number;
+  signal?: number;
 }

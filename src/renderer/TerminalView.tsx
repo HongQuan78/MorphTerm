@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
@@ -8,14 +9,38 @@ import type { EffectLayerHandle } from "./EffectLayer";
 import { defaultConfig } from "../shared/config/default-config";
 import type { MorphTermConfig } from "../shared/config/config-types";
 
-const terminalSessionStorageKey = "morphterm:terminal-session-id";
+const terminalLayoutStorageKey = "morphterm:terminal-layout-v1";
+
+interface TerminalPaneState {
+  id: string;
+  title: string;
+  sessionId?: string;
+}
+
+interface TerminalTabState {
+  id: string;
+  title: string;
+  panes: TerminalPaneState[];
+  activePaneId: string;
+  splitDirection: "row" | "column";
+}
+
+interface StoredTerminalLayout {
+  activeTabId: string;
+  tabs: TerminalTabState[];
+}
+
+interface TerminalPaneProps {
+  pane: TerminalPaneState;
+  config: MorphTermConfig;
+  isActive: boolean;
+  effectLayerRef: RefObject<EffectLayerHandle>;
+  onFocus(): void;
+  onSessionChange(sessionId: string): void;
+}
 
 export function TerminalView() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const effectLayerRef = useRef<EffectLayerHandle | null>(null);
-  const terminalRef = useRef<Terminal | null>(null);
-  const fitAddonRef = useRef<FitAddon | null>(null);
-  const sessionIdRef = useRef<string | null>(null);
   const [savedConfig, setSavedConfig] = useState<MorphTermConfig>(defaultConfig);
   const [previewConfig, setPreviewConfig] =
     useState<MorphTermConfig>(defaultConfig);
@@ -23,36 +48,39 @@ export function TerminalView() {
     string | null
   >(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [tabs, setTabs] = useState<TerminalTabState[]>(() => {
+    return loadStoredTerminalLayout()?.tabs ?? [createTab(1)];
+  });
+  const [activeTabId, setActiveTabId] = useState(() => {
+    const storedLayout = loadStoredTerminalLayout();
+
+    return storedLayout?.activeTabId ?? tabs[0]?.id ?? "";
+  });
+
+  const activeTab = useMemo(() => {
+    return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
+  }, [activeTabId, tabs]);
 
   useEffect(() => {
-    const terminal = terminalRef.current;
+    const storedLayout = loadStoredTerminalLayout();
 
-    if (!terminal) {
+    if (storedLayout) {
       return;
     }
 
-    terminal.options.fontFamily = previewConfig.fontFamily;
-    terminal.options.fontSize = previewConfig.fontSize;
-    terminal.options.theme = {
-      ...previewConfig.terminalTheme,
-      background: "#00000000"
-    };
+    setActiveTabId((currentActiveTabId) => currentActiveTabId || tabs[0]?.id || "");
+  }, [tabs]);
 
-    requestAnimationFrame(() => {
-      const terminal = terminalRef.current;
-      const sessionId = sessionIdRef.current;
+  useEffect(() => {
+    if (tabs.length === 0) {
+      return;
+    }
 
-      fitAddonRef.current?.fit();
-
-      if (terminal && sessionId) {
-        void window.morphTerm.terminal.resize({
-          id: sessionId,
-          cols: terminal.cols,
-          rows: terminal.rows
-        });
-      }
+    storeTerminalLayout({
+      activeTabId: activeTab?.id ?? tabs[0].id,
+      tabs
     });
-  }, [previewConfig]);
+  }, [activeTab?.id, tabs]);
 
   useEffect(() => {
     const background = previewConfig.appearance.background;
@@ -106,21 +134,11 @@ export function TerminalView() {
   }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) {
-      return;
-    }
-
     if (!window.morphTerm?.terminal || !window.morphTerm?.config) {
-      container.textContent = "MorphTerm terminal IPC is not available.";
       return;
     }
 
-    let terminal: Terminal | null = null;
-    let sessionId: string | null = null;
     let disposed = false;
-    let cleanupTerminal: (() => void) | null = null;
 
     void window.morphTerm.config
       .get()
@@ -131,143 +149,130 @@ export function TerminalView() {
 
         setSavedConfig(config);
         setPreviewConfig(config);
-        cleanupTerminal = createTerminalSession(container, config);
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (disposed) {
           return;
         }
 
-        container.textContent = `Failed to load config: ${String(error)}`;
         setSavedConfig(defaultConfig);
         setPreviewConfig(defaultConfig);
-        cleanupTerminal = createTerminalSession(container, defaultConfig);
       });
-
-    function createTerminalSession(
-      terminalContainer: HTMLDivElement,
-      config: MorphTermConfig
-    ): () => void {
-      const terminalTheme = {
-        ...config.terminalTheme,
-        background: "#00000000"
-      };
-
-      terminal = new Terminal({
-        cursorBlink: true,
-        fontFamily: config.fontFamily,
-        fontSize: config.fontSize,
-        lineHeight: 1.2,
-        scrollback: 5000,
-        theme: terminalTheme
-      });
-      const fitAddon = new FitAddon();
-      terminalRef.current = terminal;
-      fitAddonRef.current = fitAddon;
-
-      terminal.loadAddon(fitAddon);
-      terminal.open(terminalContainer);
-
-      const resizeTerminal = () => {
-        fitAddon.fit();
-
-        if (sessionId && terminal) {
-          void window.morphTerm.terminal.resize({
-            id: sessionId,
-            cols: terminal.cols,
-            rows: terminal.rows
-          });
-        }
-      };
-
-      const focusTerminal = () => {
-        terminal?.focus();
-      };
-
-      const inputDisposable = terminal.onData((data) => {
-        if (!sessionId) {
-          return;
-        }
-
-        void window.morphTerm.terminal.write({
-          id: sessionId,
-          data
-        });
-
-        if (isPrintableInput(data) && terminal) {
-          requestAnimationFrame(() => {
-            if (!terminal) {
-              return;
-            }
-
-            effectLayerRef.current?.triggerTypingEffect(
-              getCursorEffectOrigin(terminalContainer, terminal)
-            );
-          });
-        }
-      });
-
-      const removeDataListener = window.morphTerm.terminal.onData((event) => {
-        if (terminal && (!sessionId || event.id === sessionId)) {
-          terminal.write(event.data);
-        }
-      });
-
-      const resizeObserver = new ResizeObserver(() => {
-        resizeTerminal();
-      });
-      resizeObserver.observe(terminalContainer);
-      terminalContainer.addEventListener("pointerdown", focusTerminal);
-
-      requestAnimationFrame(() => {
-        resizeTerminal();
-        focusTerminal();
-      });
-
-      void connectTerminalSession(terminal)
-        .then((session) => {
-          sessionStorage.setItem(terminalSessionStorageKey, session.id);
-
-          if (disposed) {
-            return;
-          }
-
-          sessionId = session.id;
-          sessionIdRef.current = session.id;
-
-          if (session.history) {
-            terminal?.write(session.history);
-          }
-
-          resizeTerminal();
-          focusTerminal();
-        })
-        .catch((error: unknown) => {
-          terminal?.write(
-            `\r\nFailed to start terminal session: ${String(error)}\r\n`
-          );
-        });
-
-      return () => {
-        resizeObserver.disconnect();
-        terminalContainer.removeEventListener("pointerdown", focusTerminal);
-        removeDataListener();
-        inputDisposable.dispose();
-
-        terminal?.dispose();
-        terminal = null;
-        terminalRef.current = null;
-        fitAddonRef.current = null;
-        sessionId = null;
-        sessionIdRef.current = null;
-      };
-    }
 
     return () => {
       disposed = true;
-      cleanupTerminal?.();
     };
   }, []);
+
+  const addTab = () => {
+    const nextTab = createTab(tabs.length + 1);
+
+    setTabs((currentTabs) => [...currentTabs, nextTab]);
+    setActiveTabId(nextTab.id);
+  };
+
+  const closeTab = (tabId: string) => {
+    const tabToClose = tabs.find((tab) => tab.id === tabId);
+
+    if (!tabToClose || tabs.length === 1) {
+      return;
+    }
+
+    disposePanes(tabToClose.panes);
+
+    setTabs((currentTabs) => {
+      const nextTabs = currentTabs.filter((tab) => tab.id !== tabId);
+
+      if (activeTabId === tabId) {
+        setActiveTabId(nextTabs[0]?.id ?? "");
+      }
+
+      return nextTabs;
+    });
+  };
+
+  const splitActivePane = (splitDirection: TerminalTabState["splitDirection"]) => {
+    if (!activeTab) {
+      return;
+    }
+
+    const nextPane = createPane(activeTab.panes.length + 1);
+
+    setTabs((currentTabs) =>
+      currentTabs.map((tab) => {
+        if (tab.id !== activeTab.id) {
+          return tab;
+        }
+
+        return {
+          ...tab,
+          splitDirection,
+          panes: [...tab.panes, nextPane],
+          activePaneId: nextPane.id
+        };
+      })
+    );
+  };
+
+  const closeActivePane = () => {
+    if (!activeTab || activeTab.panes.length === 1) {
+      return;
+    }
+
+    const paneToClose = activeTab.panes.find(
+      (pane) => pane.id === activeTab.activePaneId
+    );
+
+    if (paneToClose?.sessionId) {
+      void window.morphTerm.terminal.dispose({ id: paneToClose.sessionId });
+    }
+
+    setTabs((currentTabs) =>
+      currentTabs.map((tab) => {
+        if (tab.id !== activeTab.id) {
+          return tab;
+        }
+
+        const panes = tab.panes.filter((pane) => pane.id !== tab.activePaneId);
+
+        return {
+          ...tab,
+          panes,
+          activePaneId: panes[0]?.id ?? ""
+        };
+      })
+    );
+  };
+
+  const updatePaneSession = (
+    tabId: string,
+    paneId: string,
+    sessionId: string
+  ) => {
+    setTabs((currentTabs) =>
+      currentTabs.map((tab) => {
+        if (tab.id !== tabId) {
+          return tab;
+        }
+
+        return {
+          ...tab,
+          panes: tab.panes.map((pane) =>
+            pane.id === paneId ? { ...pane, sessionId } : pane
+          )
+        };
+      })
+    );
+  };
+
+  const focusPane = (tabId: string, paneId: string) => {
+    setActiveTabId(tabId);
+    setTabs((currentTabs) =>
+      currentTabs.map((tab) =>
+        tab.id === tabId ? { ...tab, activePaneId: paneId } : tab
+      )
+    );
+  };
 
   return (
     <TerminalLayout
@@ -275,15 +280,98 @@ export function TerminalView() {
       effectLayerRef={effectLayerRef}
       backgroundImageDataUrl={backgroundImageDataUrl}
     >
-      {!isSettingsOpen && (
-        <button
-          type="button"
-          className="settings-toggle"
-          onClick={() => setIsSettingsOpen(true)}
-        >
-          Settings
-        </button>
-      )}
+      <div className="terminal-workbench">
+        <div className="terminal-tabbar">
+          <div className="terminal-tabs" role="tablist" aria-label="Terminal tabs">
+            {tabs.map((tab, tabIndex) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab.id === activeTab?.id}
+                className={tab.id === activeTab?.id ? "terminal-tab active" : "terminal-tab"}
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+              >
+                <span className="terminal-tab-index">
+                  {String(tabIndex + 1).padStart(2, "0")}
+                </span>
+                <span className="terminal-tab-label">{getTabLabel(tab)}</span>
+                <span className="terminal-tab-meta">{tab.panes.length}</span>
+                {tabs.length > 1 && (
+                  <span
+                    className="terminal-tab-close"
+                    title="Close tab"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      closeTab(tab.id);
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="terminal-toolbar" aria-label="Terminal actions">
+            <button type="button" title="New tab" aria-label="New tab" onClick={addTab}>
+              <span className="terminal-action-icon plus" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              title="Split right"
+              aria-label="Split right"
+              onClick={() => splitActivePane("row")}
+            >
+              <span className="terminal-action-icon split-right" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              title="Split down"
+              aria-label="Split down"
+              onClick={() => splitActivePane("column")}
+            >
+              <span className="terminal-action-icon split-down" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              title="Close pane"
+              aria-label="Close pane"
+              disabled={!activeTab || activeTab.panes.length <= 1}
+              onClick={closeActivePane}
+            >
+              <span className="terminal-action-icon close" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              title="Settings"
+              aria-label="Settings"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <span className="terminal-action-icon settings" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        {activeTab ? (
+          <div className={`terminal-panes ${activeTab.splitDirection}`}>
+            {activeTab.panes.map((pane) => (
+              <TerminalPane
+                key={pane.id}
+                pane={pane}
+                config={previewConfig}
+                isActive={pane.id === activeTab.activePaneId}
+                effectLayerRef={effectLayerRef}
+                onFocus={() => focusPane(activeTab.id, pane.id)}
+                onSessionChange={(sessionId) =>
+                  updatePaneSession(activeTab.id, pane.id, sessionId)
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="terminal-empty-state">No terminal sessions.</div>
+        )}
+      </div>
+
       <SettingsPanel
         previewConfig={previewConfig}
         savedConfig={savedConfig}
@@ -292,9 +380,276 @@ export function TerminalView() {
         onPreviewConfigChange={setPreviewConfig}
         onSavedConfigChange={setSavedConfig}
       />
-      <div ref={containerRef} className="terminal-view" />
     </TerminalLayout>
   );
+}
+
+function TerminalPane({
+  pane,
+  config,
+  isActive,
+  effectLayerRef,
+  onFocus,
+  onSessionChange
+}: TerminalPaneProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const terminalRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const sessionIdRef = useRef<string | null>(pane.sessionId ?? null);
+  const [sessionStatus, setSessionStatus] = useState<
+    "starting" | "connected" | "exited"
+  >(pane.sessionId ? "connected" : "starting");
+
+  useEffect(() => {
+    const terminal = terminalRef.current;
+
+    if (!terminal) {
+      return;
+    }
+
+    terminal.options.fontFamily = config.fontFamily;
+    terminal.options.fontSize = config.fontSize;
+    terminal.options.theme = {
+      ...config.terminalTheme,
+      background: "#00000000"
+    };
+
+    requestAnimationFrame(() => {
+      resizeTerminal(terminal, fitAddonRef.current, sessionIdRef.current);
+    });
+  }, [config]);
+
+  useEffect(() => {
+    const terminalContainer = containerRef.current;
+
+    if (!terminalContainer) {
+      return;
+    }
+
+    if (!window.morphTerm?.terminal) {
+      terminalContainer.textContent = "MorphTerm terminal IPC is not available.";
+      return;
+    }
+
+    let disposed = false;
+    const terminal = new Terminal({
+      cursorBlink: true,
+      fontFamily: config.fontFamily,
+      fontSize: config.fontSize,
+      lineHeight: 1.2,
+      scrollback: 5000,
+      theme: {
+        ...config.terminalTheme,
+        background: "#00000000"
+      }
+    });
+    const fitAddon = new FitAddon();
+    terminalRef.current = terminal;
+    fitAddonRef.current = fitAddon;
+
+    terminal.loadAddon(fitAddon);
+    terminal.open(terminalContainer);
+
+    const focusTerminal = () => {
+      onFocus();
+      terminal.focus();
+    };
+
+    const inputDisposable = terminal.onData((data) => {
+      const sessionId = sessionIdRef.current;
+
+      if (!sessionId) {
+        return;
+      }
+
+      void window.morphTerm.terminal.write({
+        id: sessionId,
+        data
+      });
+
+      if (isPrintableInput(data)) {
+        requestAnimationFrame(() => {
+          effectLayerRef.current?.triggerTypingEffect(
+            getCursorEffectOrigin(terminalContainer, terminal)
+          );
+        });
+      }
+    });
+
+    const removeDataListener = window.morphTerm.terminal.onData((event) => {
+      if (event.id === sessionIdRef.current) {
+        terminal.write(event.data);
+      }
+    });
+    const removeExitListener = window.morphTerm.terminal.onExit((event) => {
+      if (event.id === sessionIdRef.current) {
+        setSessionStatus("exited");
+        terminal.write(`\r\n[process exited with code ${event.exitCode}]\r\n`);
+      }
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      resizeTerminal(terminal, fitAddon, sessionIdRef.current);
+    });
+    resizeObserver.observe(terminalContainer);
+    terminalContainer.addEventListener("pointerdown", focusTerminal);
+
+    requestAnimationFrame(() => {
+      resizeTerminal(terminal, fitAddon, sessionIdRef.current);
+
+      if (isActive) {
+        focusTerminal();
+      }
+    });
+
+    void connectTerminalSession(terminal, pane.sessionId)
+      .then((session) => {
+        if (disposed) {
+          return;
+        }
+
+        sessionIdRef.current = session.id;
+        setSessionStatus("connected");
+        onSessionChange(session.id);
+
+        if (session.history) {
+          terminal.write(session.history);
+        }
+
+        resizeTerminal(terminal, fitAddon, session.id);
+
+        if (isActive) {
+          focusTerminal();
+        }
+      })
+      .catch((error: unknown) => {
+        terminal.write(`\r\nFailed to start terminal session: ${String(error)}\r\n`);
+      });
+
+    return () => {
+      disposed = true;
+      resizeObserver.disconnect();
+      terminalContainer.removeEventListener("pointerdown", focusTerminal);
+      removeDataListener();
+      removeExitListener();
+      inputDisposable.dispose();
+      terminal.dispose();
+      terminalRef.current = null;
+      fitAddonRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      terminalRef.current?.focus();
+    }
+  }, [isActive]);
+
+  return (
+    <div className={isActive ? "terminal-pane active" : "terminal-pane"}>
+      <div className="terminal-pane-header">
+        <span className="terminal-pane-title">{pane.title}</span>
+        <span className="terminal-pane-status">{sessionStatus}</span>
+      </div>
+      <div ref={containerRef} className="terminal-view" />
+    </div>
+  );
+}
+
+function createTab(index: number): TerminalTabState {
+  const pane = createPane(1);
+
+  return {
+    id: crypto.randomUUID(),
+    title: "Shell",
+    panes: [pane],
+    activePaneId: pane.id,
+    splitDirection: "row"
+  };
+}
+
+function createPane(index: number): TerminalPaneState {
+  return {
+    id: crypto.randomUUID(),
+    title: `Pane ${index}`
+  };
+}
+
+function disposePanes(panes: TerminalPaneState[]): void {
+  for (const pane of panes) {
+    if (pane.sessionId) {
+      void window.morphTerm.terminal.dispose({ id: pane.sessionId });
+    }
+  }
+}
+
+function resizeTerminal(
+  terminal: Terminal,
+  fitAddon: FitAddon | null,
+  sessionId: string | null
+): void {
+  fitAddon?.fit();
+
+  if (sessionId) {
+    void window.morphTerm.terminal.resize({
+      id: sessionId,
+      cols: terminal.cols,
+      rows: terminal.rows
+    });
+  }
+}
+
+async function connectTerminalSession(
+  terminal: Terminal,
+  sessionId?: string
+): Promise<{
+  id: string;
+  history?: string;
+}> {
+  if (sessionId) {
+    try {
+      return await window.morphTerm.terminal.attach({
+        id: sessionId,
+        cols: terminal.cols,
+        rows: terminal.rows
+      });
+    } catch {
+      // The main process no longer has this session; create a fresh one below.
+    }
+  }
+
+  return window.morphTerm.terminal.create({
+    cols: terminal.cols,
+    rows: terminal.rows
+  });
+}
+
+function loadStoredTerminalLayout(): StoredTerminalLayout | null {
+  try {
+    const rawLayout = sessionStorage.getItem(terminalLayoutStorageKey);
+
+    if (!rawLayout) {
+      return null;
+    }
+
+    const parsedLayout = JSON.parse(rawLayout) as StoredTerminalLayout;
+
+    if (!Array.isArray(parsedLayout.tabs) || parsedLayout.tabs.length === 0) {
+      return null;
+    }
+
+    return parsedLayout;
+  } catch {
+    return null;
+  }
+}
+
+function storeTerminalLayout(layout: StoredTerminalLayout): void {
+  sessionStorage.setItem(terminalLayoutStorageKey, JSON.stringify(layout));
+}
+
+function getTabLabel(tab: TerminalTabState): string {
+  return /^Tab \d+$/.test(tab.title) ? "Shell" : tab.title;
 }
 
 function isPrintableInput(data: string): boolean {
@@ -309,7 +664,9 @@ function getCursorEffectOrigin(
   container: HTMLDivElement,
   terminal: Terminal
 ): { x: number; y: number } {
-  const containerRect = container.getBoundingClientRect();
+  const layoutRect =
+    container.closest(".terminal-layout")?.getBoundingClientRect() ??
+    container.getBoundingClientRect();
   const rowsElement = container.querySelector(".xterm-rows");
   const firstRow = rowsElement?.firstElementChild;
   const rowsRect = rowsElement?.getBoundingClientRect();
@@ -322,8 +679,8 @@ function getCursorEffectOrigin(
     const cursorY = terminal.buffer.active.cursorY;
 
     return {
-      x: rowsRect.left - containerRect.left + cursorX * cellWidth,
-      y: rowsRect.top - containerRect.top + cursorY * cellHeight + cellHeight * 0.55
+      x: rowsRect.left - layoutRect.left + cursorX * cellWidth,
+      y: rowsRect.top - layoutRect.top + cursorY * cellHeight + cellHeight * 0.55
     };
   }
 
@@ -331,28 +688,4 @@ function getCursorEffectOrigin(
     x: 18,
     y: 24
   };
-}
-
-async function connectTerminalSession(terminal: Terminal): Promise<{
-  id: string;
-  history?: string;
-}> {
-  const storedSessionId = sessionStorage.getItem(terminalSessionStorageKey);
-
-  if (storedSessionId) {
-    try {
-      return await window.morphTerm.terminal.attach({
-        id: storedSessionId,
-        cols: terminal.cols,
-        rows: terminal.rows
-      });
-    } catch {
-      sessionStorage.removeItem(terminalSessionStorageKey);
-    }
-  }
-
-  return window.morphTerm.terminal.create({
-    cols: terminal.cols,
-    rows: terminal.rows
-  });
 }
