@@ -82,10 +82,11 @@ Builds the Electron main/preload code and the renderer.
 
 ## Customization
 
-MorphTerm stores user settings as JSON in the Electron `userData` folder. During development, the config is written to:
+MorphTerm stores user settings as JSON. During development, Electron runtime cache and app config are kept separate:
 
 ```text
-.morphterm-dev/config.json
+.morphterm-dev/user-data/
+.morphterm-dev/config/config.json
 ```
 
 Example config:

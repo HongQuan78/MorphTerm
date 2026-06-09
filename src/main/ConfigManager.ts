@@ -8,14 +8,12 @@ import type {
   MorphTermConfigUpdate
 } from "../shared/config/config-types";
 
-const configFileName = "config.json";
-
 export class ConfigManager {
   private configPath: string;
   private config: MorphTermConfig = defaultConfig;
 
-  constructor(userDataPath: string) {
-    this.configPath = path.join(userDataPath, configFileName);
+  constructor(configPath: string) {
+    this.configPath = configPath;
   }
 
   load(): MorphTermConfig {

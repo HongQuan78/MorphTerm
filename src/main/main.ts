@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from "electron";
+import fs from "node:fs";
 import path from "node:path";
 import { ConfigManager } from "./ConfigManager";
 import { TerminalManager } from "./TerminalManager";
@@ -9,9 +10,15 @@ import { appInfo } from "../shared/appInfo";
 const rendererDevUrl = "http://127.0.0.1:5173";
 const terminalManager = new TerminalManager();
 let configManager: ConfigManager;
+let configPath: string | undefined;
 
 if (!app.isPackaged) {
-  app.setPath("userData", path.join(process.cwd(), ".morphterm-dev"));
+  const devDataPath = path.join(process.cwd(), ".morphterm-dev");
+  const devUserDataPath = path.join(devDataPath, "user-data");
+
+  configPath = path.join(devDataPath, "config", "config.json");
+  migrateDevConfig(path.join(devDataPath, "config.json"), configPath);
+  app.setPath("userData", devUserDataPath);
 }
 
 app.disableHardwareAcceleration();
@@ -43,7 +50,9 @@ function createMainWindow(): void {
 }
 
 app.on("ready", () => {
-  configManager = new ConfigManager(app.getPath("userData"));
+  configManager = new ConfigManager(
+    configPath ?? path.join(app.getPath("userData"), "config", "config.json")
+  );
   configManager.load();
   registerConfigIpc(configManager);
   registerTerminalIpc(terminalManager);
@@ -63,3 +72,12 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+function migrateDevConfig(legacyConfigPath: string, nextConfigPath: string): void {
+  if (fs.existsSync(nextConfigPath) || !fs.existsSync(legacyConfigPath)) {
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(nextConfigPath), { recursive: true });
+  fs.copyFileSync(legacyConfigPath, nextConfigPath);
+}
