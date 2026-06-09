@@ -112,7 +112,7 @@ export function SettingsPanel({
       };
 
       if (typeof configApi.selectBackgroundImage !== "function") {
-        setStatus("Restart FluxTerm to enable image browsing.");
+        setStatus("Restart MorphTerm to enable image browsing.");
         return;
       }
 
@@ -136,7 +136,7 @@ export function SettingsPanel({
     <aside className="settings-panel" aria-label="Appearance settings">
       <header className="settings-header">
         <div>
-          <p className="settings-eyebrow">FluxTerm</p>
+          <p className="settings-eyebrow">MorphTerm</p>
           <h2>Appearance</h2>
         </div>
         <button type="button" className="ghost-button" onClick={onClose}>

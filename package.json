@@ -1,5 +1,5 @@
 {
-  "name": "fluxterm",
+  "name": "morphterm",
   "version": "0.1.0",
   "description": "An open-source customizable desktop terminal inspired by Hyper.",
   "main": "dist/main/main.js",

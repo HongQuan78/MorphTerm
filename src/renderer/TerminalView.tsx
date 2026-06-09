@@ -109,7 +109,7 @@ export function TerminalView() {
     }
 
     if (!window.fluxTerm?.terminal || !window.fluxTerm?.config) {
-      container.textContent = "FluxTerm terminal IPC is not available.";
+      container.textContent = "MorphTerm terminal IPC is not available.";
       return;
     }
 

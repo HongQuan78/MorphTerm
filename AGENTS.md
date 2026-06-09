@@ -1,4 +1,4 @@
-# FluxTerm - Agent Instructions
+# MorphTerm - Agent Instructions
 
 ## Project goal
 

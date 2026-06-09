@@ -1,4 +1,4 @@
 export const appInfo = {
-  name: "FluxTerm",
+  name: "MorphTerm",
   version: "0.1.0"
 } as const;
