@@ -325,7 +325,6 @@ select {
 
 .terminal-panes {
   display: flex;
-  gap: 6px;
   min-height: 0;
   overflow: hidden;
 }
@@ -349,6 +348,84 @@ select {
   border-radius: 7px;
   background: rgba(8, 11, 16, 0.2);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.terminal-pane-resizer {
+  position: relative;
+  display: grid;
+  flex: 0 0 9px;
+  place-items: center;
+  opacity: 0.72;
+  outline: none;
+  touch-action: none;
+  z-index: 1;
+}
+
+.terminal-panes.row .terminal-pane-resizer {
+  width: 9px;
+  cursor: col-resize;
+}
+
+.terminal-panes.column .terminal-pane-resizer {
+  height: 9px;
+  cursor: row-resize;
+}
+
+.terminal-pane-resizer::before {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.28);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.36);
+  content: "";
+  transition:
+    width 120ms ease,
+    height 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.terminal-panes.row .terminal-pane-resizer::before {
+  width: 1px;
+  height: min(72px, 42%);
+}
+
+.terminal-panes.column .terminal-pane-resizer::before {
+  width: min(72px, 42%);
+  height: 1px;
+}
+
+.terminal-pane-resizer:hover::before,
+.terminal-pane-resizer:focus-visible::before,
+.is-resizing-pane .terminal-pane-resizer::before {
+  background: rgba(143, 188, 187, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(143, 188, 187, 0.24),
+    0 0 18px rgba(143, 188, 187, 0.24);
+}
+
+.terminal-panes.row .terminal-pane-resizer:hover::before,
+.terminal-panes.row .terminal-pane-resizer:focus-visible::before,
+.is-resizing-pane .terminal-panes.row .terminal-pane-resizer::before {
+  width: 3px;
+}
+
+.terminal-panes.column .terminal-pane-resizer:hover::before,
+.terminal-panes.column .terminal-pane-resizer:focus-visible::before,
+.is-resizing-pane .terminal-panes.column .terminal-pane-resizer::before {
+  height: 3px;
+}
+
+.is-resizing-pane {
+  user-select: none;
+}
+
+.is-resizing-pane .terminal-panes.row,
+.is-resizing-pane .terminal-panes.row * {
+  cursor: col-resize;
+}
+
+.is-resizing-pane .terminal-panes.column,
+.is-resizing-pane .terminal-panes.column * {
+  cursor: row-resize;
 }
 
 .terminal-pane.active {

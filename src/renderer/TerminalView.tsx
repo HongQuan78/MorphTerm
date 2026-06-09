@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { RefObject } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
@@ -15,6 +15,7 @@ interface TerminalPaneState {
   id: string;
   title: string;
   sessionId?: string;
+  size?: number;
 }
 
 interface TerminalTabState {
@@ -41,6 +42,7 @@ interface TerminalPaneProps {
 
 export function TerminalView() {
   const effectLayerRef = useRef<EffectLayerHandle | null>(null);
+  const panesContainerRef = useRef<HTMLDivElement | null>(null);
   const [savedConfig, setSavedConfig] = useState<MorphTermConfig>(defaultConfig);
   const [previewConfig, setPreviewConfig] =
     useState<MorphTermConfig>(defaultConfig);
@@ -197,6 +199,7 @@ export function TerminalView() {
     }
 
     const nextPane = createPane(activeTab.panes.length + 1);
+    const panes = normalizePaneSizes([...activeTab.panes, nextPane]);
 
     setTabs((currentTabs) =>
       currentTabs.map((tab) => {
@@ -207,7 +210,7 @@ export function TerminalView() {
         return {
           ...tab,
           splitDirection,
-          panes: [...tab.panes, nextPane],
+          panes,
           activePaneId: nextPane.id
         };
       })
@@ -233,7 +236,9 @@ export function TerminalView() {
           return tab;
         }
 
-        const panes = tab.panes.filter((pane) => pane.id !== tab.activePaneId);
+        const panes = normalizePaneSizes(
+          tab.panes.filter((pane) => pane.id !== tab.activePaneId)
+        );
 
         return {
           ...tab,
@@ -272,6 +277,94 @@ export function TerminalView() {
         tab.id === tabId ? { ...tab, activePaneId: paneId } : tab
       )
     );
+  };
+
+  const resizePanePair = (tabId: string, paneIndex: number, deltaPercent: number) => {
+    setTabs((currentTabs) =>
+      currentTabs.map((tab) => {
+        if (tab.id !== tabId) {
+          return tab;
+        }
+
+        const panes = normalizePaneSizes(tab.panes);
+        const leftPane = panes[paneIndex];
+        const rightPane = panes[paneIndex + 1];
+
+        if (!leftPane || !rightPane) {
+          return tab;
+        }
+
+        const pairTotal = (leftPane.size ?? 0) + (rightPane.size ?? 0);
+        const minSize = Math.min(12, pairTotal / 2);
+        const leftSize = clamp(
+          (leftPane.size ?? 0) + deltaPercent,
+          minSize,
+          pairTotal - minSize
+        );
+        const rightSize = pairTotal - leftSize;
+
+        return {
+          ...tab,
+          panes: panes.map((pane, index) => {
+            if (index === paneIndex) {
+              return { ...pane, size: leftSize };
+            }
+
+            if (index === paneIndex + 1) {
+              return { ...pane, size: rightSize };
+            }
+
+            return pane;
+          })
+        };
+      })
+    );
+  };
+
+  const startPaneResize = (
+    paneIndex: number,
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    if (!activeTab || !panesContainerRef.current) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const tabId = activeTab.id;
+    const splitDirection = activeTab.splitDirection;
+    const rect = panesContainerRef.current.getBoundingClientRect();
+    const startPosition =
+      splitDirection === "row" ? event.clientX : event.clientY;
+    const containerSize = splitDirection === "row" ? rect.width : rect.height;
+
+    if (containerSize <= 0) {
+      return;
+    }
+
+    let previousDeltaPercent = 0;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const currentPosition =
+        splitDirection === "row" ? moveEvent.clientX : moveEvent.clientY;
+      const totalDeltaPercent =
+        ((currentPosition - startPosition) / containerSize) * 100;
+      const incrementalDeltaPercent = totalDeltaPercent - previousDeltaPercent;
+
+      previousDeltaPercent = totalDeltaPercent;
+      resizePanePair(tabId, paneIndex, incrementalDeltaPercent);
+    };
+
+    const handlePointerUp = () => {
+      document.body.classList.remove("is-resizing-pane");
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    document.body.classList.add("is-resizing-pane");
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp, { once: true });
   };
 
   return (
@@ -352,19 +445,34 @@ export function TerminalView() {
         </div>
 
         {activeTab ? (
-          <div className={`terminal-panes ${activeTab.splitDirection}`}>
-            {activeTab.panes.map((pane) => (
-              <TerminalPane
-                key={pane.id}
-                pane={pane}
-                config={previewConfig}
-                isActive={pane.id === activeTab.activePaneId}
-                effectLayerRef={effectLayerRef}
-                onFocus={() => focusPane(activeTab.id, pane.id)}
-                onSessionChange={(sessionId) =>
-                  updatePaneSession(activeTab.id, pane.id, sessionId)
-                }
-              />
+          <div
+            ref={panesContainerRef}
+            className={`terminal-panes ${activeTab.splitDirection}`}
+          >
+            {normalizePaneSizes(activeTab.panes).map((pane, paneIndex, panes) => (
+              <Fragment key={pane.id}>
+                <TerminalPane
+                  pane={pane}
+                  config={previewConfig}
+                  isActive={pane.id === activeTab.activePaneId}
+                  effectLayerRef={effectLayerRef}
+                  onFocus={() => focusPane(activeTab.id, pane.id)}
+                  onSessionChange={(sessionId) =>
+                    updatePaneSession(activeTab.id, pane.id, sessionId)
+                  }
+                />
+                {paneIndex < panes.length - 1 && (
+                  <div
+                    className="terminal-pane-resizer"
+                    role="separator"
+                    aria-orientation={
+                      activeTab.splitDirection === "row" ? "vertical" : "horizontal"
+                    }
+                    aria-label="Resize terminal pane"
+                    onPointerDown={(event) => startPaneResize(paneIndex, event)}
+                  />
+                )}
+              </Fragment>
             ))}
           </div>
         ) : (
@@ -546,7 +654,10 @@ function TerminalPane({
   }, [isActive]);
 
   return (
-    <div className={isActive ? "terminal-pane active" : "terminal-pane"}>
+    <div
+      className={isActive ? "terminal-pane active" : "terminal-pane"}
+      style={{ flexGrow: pane.size ?? 1 }}
+    >
       <div className="terminal-pane-header">
         <span className="terminal-pane-title">{pane.title}</span>
         <span className="terminal-pane-status">{sessionStatus}</span>
@@ -571,7 +682,8 @@ function createTab(index: number): TerminalTabState {
 function createPane(index: number): TerminalPaneState {
   return {
     id: crypto.randomUUID(),
-    title: `Pane ${index}`
+    title: `Pane ${index}`,
+    size: 100
   };
 }
 
@@ -645,7 +757,38 @@ function loadStoredTerminalLayout(): StoredTerminalLayout | null {
 }
 
 function storeTerminalLayout(layout: StoredTerminalLayout): void {
-  sessionStorage.setItem(terminalLayoutStorageKey, JSON.stringify(layout));
+  sessionStorage.setItem(
+    terminalLayoutStorageKey,
+    JSON.stringify({
+      ...layout,
+      tabs: layout.tabs.map((tab) => ({
+        ...tab,
+        panes: normalizePaneSizes(tab.panes)
+      }))
+    })
+  );
+}
+
+function normalizePaneSizes(panes: TerminalPaneState[]): TerminalPaneState[] {
+  if (panes.length === 0) {
+    return panes;
+  }
+
+  const fallbackSize = 100 / panes.length;
+  const totalSize = panes.reduce((total, pane) => total + (pane.size ?? 0), 0);
+
+  if (totalSize <= 0) {
+    return panes.map((pane) => ({ ...pane, size: fallbackSize }));
+  }
+
+  return panes.map((pane) => ({
+    ...pane,
+    size: ((pane.size ?? fallbackSize) / totalSize) * 100
+  }));
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 function getTabLabel(tab: TerminalTabState): string {
