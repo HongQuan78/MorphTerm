@@ -40,5 +40,15 @@ export const defaultConfig: MorphTermConfig = {
     profile: "system",
     customPath: "",
     customArgs: []
+  },
+  keybindings: {
+    newTab: "Ctrl+Shift+T",
+    closeTab: "Ctrl+Shift+W",
+    nextTab: "Ctrl+Tab",
+    previousTab: "Ctrl+Shift+Tab",
+    splitRight: "Ctrl+Shift+D",
+    splitDown: "Ctrl+Shift+E",
+    closePane: "Ctrl+Shift+X",
+    toggleSettings: "Ctrl+,"
   }
 };

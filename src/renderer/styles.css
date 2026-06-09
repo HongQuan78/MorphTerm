@@ -672,6 +672,36 @@ select {
   line-height: 1.45;
 }
 
+.keybinding-list {
+  display: grid;
+  gap: 8px;
+}
+
+.keybinding-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(236, 239, 244, 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.26);
+  font-size: 0.82rem;
+}
+
+.keybinding-row kbd {
+  flex: 0 0 auto;
+  border: 1px solid rgba(143, 188, 187, 0.24);
+  border-radius: 5px;
+  padding: 3px 7px;
+  color: #d8ffff;
+  background: rgba(143, 188, 187, 0.1);
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 .effect-layer {
   z-index: 2;
   width: 100%;

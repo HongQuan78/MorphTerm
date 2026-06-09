@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
+  MorphTermKeybindingAction,
   MorphTermShellProfile,
   MorphTermTypingEffect
 } from "../shared/config/config-types";
@@ -53,6 +54,20 @@ const unixShellProfiles: Array<{
 }> = [
   { value: "system", label: "System shell" },
   { value: "custom", label: "Custom" }
+];
+
+const keybindingLabels: Array<{
+  action: MorphTermKeybindingAction;
+  label: string;
+}> = [
+  { action: "newTab", label: "New tab" },
+  { action: "closeTab", label: "Close tab" },
+  { action: "nextTab", label: "Next tab" },
+  { action: "previousTab", label: "Previous tab" },
+  { action: "splitRight", label: "Split right" },
+  { action: "splitDown", label: "Split down" },
+  { action: "closePane", label: "Close pane" },
+  { action: "toggleSettings", label: "Toggle settings" }
 ];
 
 export function SettingsPanel({
@@ -497,6 +512,21 @@ export function SettingsPanel({
             <option value="spark">Spark</option>
           </select>
         </label>
+      </section>
+
+      <section className="settings-section">
+        <h3>Keybindings</h3>
+        <div className="keybinding-list">
+          {keybindingLabels.map((keybinding) => (
+            <div className="keybinding-row" key={keybinding.action}>
+              <span>{keybinding.label}</span>
+              <kbd>{draft.keybindings[keybinding.action]}</kbd>
+            </div>
+          ))}
+        </div>
+        <p className="settings-note">
+          Edit keybindings in config JSON for now, then save or restart MorphTerm.
+        </p>
       </section>
 
       <footer className="settings-footer">

@@ -5,6 +5,7 @@ import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { SettingsPanel } from "./SettingsPanel";
 import { TerminalLayout } from "./TerminalLayout";
+import { getKeybindingAction } from "./keybindings";
 import type { EffectLayerHandle } from "./EffectLayer";
 import { defaultConfig } from "../shared/config/default-config";
 import type { MorphTermConfig } from "../shared/config/config-types";
@@ -121,21 +122,6 @@ export function TerminalView() {
   }, [previewConfig.appearance.background.type, previewConfig.appearance.background.value]);
 
   useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === ",") {
-        event.preventDefault();
-        setIsSettingsOpen((isOpen) => !isOpen);
-      }
-    };
-
-    window.addEventListener("keydown", handleShortcut);
-
-    return () => {
-      window.removeEventListener("keydown", handleShortcut);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!window.morphTerm?.terminal || !window.morphTerm?.config) {
       return;
     }
@@ -191,6 +177,26 @@ export function TerminalView() {
 
       return nextTabs;
     });
+  };
+
+  const closeActiveTab = () => {
+    if (activeTab) {
+      closeTab(activeTab.id);
+    }
+  };
+
+  const selectAdjacentTab = (direction: "next" | "previous") => {
+    if (!activeTab || tabs.length <= 1) {
+      return;
+    }
+
+    const activeIndex = tabs.findIndex((tab) => tab.id === activeTab.id);
+    const nextIndex =
+      direction === "next"
+        ? (activeIndex + 1) % tabs.length
+        : (activeIndex - 1 + tabs.length) % tabs.length;
+
+    setActiveTabId(tabs[nextIndex]?.id ?? activeTab.id);
   };
 
   const splitActivePane = (splitDirection: TerminalTabState["splitDirection"]) => {
@@ -366,6 +372,54 @@ export function TerminalView() {
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp, { once: true });
   };
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      const action = getKeybindingAction(event, previewConfig.keybindings);
+
+      if (
+        !action ||
+        (isSettingsFormControl(event.target) && action !== "toggleSettings")
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+
+      switch (action) {
+        case "newTab":
+          addTab();
+          break;
+        case "closeTab":
+          closeActiveTab();
+          break;
+        case "nextTab":
+          selectAdjacentTab("next");
+          break;
+        case "previousTab":
+          selectAdjacentTab("previous");
+          break;
+        case "splitRight":
+          splitActivePane("row");
+          break;
+        case "splitDown":
+          splitActivePane("column");
+          break;
+        case "closePane":
+          closeActivePane();
+          break;
+        case "toggleSettings":
+          setIsSettingsOpen((isOpen) => !isOpen);
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleShortcut, true);
+    };
+  }, [activeTab, previewConfig.keybindings, tabs]);
 
   return (
     <TerminalLayout
@@ -793,6 +847,19 @@ function clamp(value: number, min: number, max: number): number {
 
 function getTabLabel(tab: TerminalTabState): string {
   return /^Tab \d+$/.test(tab.title) ? "Shell" : tab.title;
+}
+
+function isSettingsFormControl(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    Boolean(target.closest(".settings-panel")) &&
+    (target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement)
+  );
 }
 
 function isPrintableInput(data: string): boolean {

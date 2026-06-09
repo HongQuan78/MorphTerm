@@ -30,6 +30,21 @@ export interface MorphTermShellConfig {
   customArgs: string[];
 }
 
+export type MorphTermKeybindingAction =
+  | "newTab"
+  | "closeTab"
+  | "nextTab"
+  | "previousTab"
+  | "splitRight"
+  | "splitDown"
+  | "closePane"
+  | "toggleSettings";
+
+export type MorphTermKeybindingsConfig = Record<
+  MorphTermKeybindingAction,
+  string
+>;
+
 export interface MorphTermConfig {
   fontFamily: string;
   fontSize: number;
@@ -37,6 +52,7 @@ export interface MorphTermConfig {
   appearance: MorphTermAppearanceConfig;
   effects: MorphTermEffectsConfig;
   shell: MorphTermShellConfig;
+  keybindings: MorphTermKeybindingsConfig;
 }
 
 export type MorphTermConfigUpdate = Partial<{
@@ -48,4 +64,5 @@ export type MorphTermConfigUpdate = Partial<{
   }>;
   effects: Partial<MorphTermEffectsConfig>;
   shell: Partial<MorphTermShellConfig>;
+  keybindings: Partial<MorphTermKeybindingsConfig>;
 }>;

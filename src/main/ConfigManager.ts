@@ -4,9 +4,9 @@ import { shell } from "electron";
 import { defaultConfig } from "../shared/config/default-config";
 import type {
   MorphTermConfig,
-  MorphTermBackgroundConfig,
   MorphTermConfigUpdate
 } from "../shared/config/config-types";
+import { mergeConfig, validateConfig } from "../shared/config/validate-config";
 
 export class ConfigManager {
   private configPath: string;
@@ -27,7 +27,7 @@ export class ConfigManager {
 
     try {
       const rawConfig = fs.readFileSync(this.configPath, "utf8");
-      this.config = mergeConfig(JSON.parse(rawConfig) as MorphTermConfigUpdate);
+      this.config = validateConfig(JSON.parse(rawConfig));
     } catch {
       this.config = defaultConfig;
     }
@@ -59,72 +59,4 @@ export class ConfigManager {
   private writeConfig(): void {
     fs.writeFileSync(this.configPath, `${JSON.stringify(this.config, null, 2)}\n`);
   }
-}
-
-function mergeConfig(
-  update: MorphTermConfigUpdate,
-  base: MorphTermConfig = defaultConfig
-): MorphTermConfig {
-  return {
-    fontFamily: update.fontFamily ?? base.fontFamily,
-    fontSize: update.fontSize ?? base.fontSize,
-    terminalTheme: {
-      ...base.terminalTheme,
-      ...update.terminalTheme
-    },
-    appearance: {
-      ...base.appearance,
-      ...update.appearance,
-      background: {
-        ...base.appearance.background,
-        ...normalizeLegacyBackground(update),
-        ...update.appearance?.background
-      }
-    },
-    effects: {
-      ...base.effects,
-      ...update.effects
-    },
-    shell: {
-      ...base.shell,
-      ...update.shell,
-      customArgs: Array.isArray(update.shell?.customArgs)
-        ? update.shell.customArgs
-        : base.shell.customArgs
-    }
-  };
-}
-
-function normalizeLegacyBackground(
-  update: MorphTermConfigUpdate & {
-    background?: {
-      color?: string;
-      image?: string | null;
-      imageOpacity?: number;
-    };
-  }
-): Partial<MorphTermBackgroundConfig> {
-  if (!update.background) {
-    return {};
-  }
-
-  if (update.background.image) {
-    return {
-      type: "image",
-      value: update.background.image,
-      opacity: update.background.imageOpacity ?? 0.28,
-      blur: 0
-    };
-  }
-
-  if (update.background.color) {
-    return {
-      type: "color",
-      value: update.background.color,
-      opacity: 1,
-      blur: 0
-    };
-  }
-
-  return {};
 }
