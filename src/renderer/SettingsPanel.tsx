@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
@@ -6,10 +6,12 @@ import type {
 } from "../shared/config/config-types";
 
 interface SettingsPanelProps {
-  config: MorphTermConfig;
+  previewConfig: MorphTermConfig;
+  savedConfig: MorphTermConfig;
   isOpen: boolean;
   onClose(): void;
-  onConfigChange(config: MorphTermConfig): void;
+  onPreviewConfigChange(config: MorphTermConfig): void;
+  onSavedConfigChange(config: MorphTermConfig): void;
 }
 
 interface GradientDraft {
@@ -34,26 +36,28 @@ const gradientPresets: Array<{ name: string; value: string }> = [
 ];
 
 export function SettingsPanel({
-  config,
+  previewConfig,
+  savedConfig,
   isOpen,
   onClose,
-  onConfigChange
+  onPreviewConfigChange,
+  onSavedConfigChange
 }: SettingsPanelProps) {
-  const [draft, setDraft] = useState<MorphTermConfig>(config);
+  const [draft, setDraft] = useState<MorphTermConfig>(previewConfig);
   const [status, setStatus] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const savedConfigRef = useRef<MorphTermConfig>(config);
   const gradientDraft = useMemo(
     () => parseGradient(draft.appearance.background.value),
     [draft.appearance.background.value]
   );
 
   useEffect(() => {
-    if (!hasUnsavedChanges) {
-      savedConfigRef.current = config;
-      setDraft(config);
-    }
-  }, [config, hasUnsavedChanges]);
+    setDraft(previewConfig);
+  }, [previewConfig]);
+
+  useEffect(() => {
+    setHasUnsavedChanges(configsAreDifferent(previewConfig, savedConfig));
+  }, [previewConfig, savedConfig]);
 
   if (!isOpen) {
     return null;
@@ -61,7 +65,7 @@ export function SettingsPanel({
 
   const updateDraft = (nextConfig: MorphTermConfig) => {
     setDraft(nextConfig);
-    onConfigChange(nextConfig);
+    onPreviewConfigChange(nextConfig);
     setHasUnsavedChanges(true);
     setStatus("Unsaved changes");
   };
@@ -135,8 +139,8 @@ export function SettingsPanel({
     try {
       setStatus("Saving...");
       const savedConfig = await window.morphTerm.config.update(draft);
-      savedConfigRef.current = savedConfig;
-      onConfigChange(savedConfig);
+      onSavedConfigChange(savedConfig);
+      onPreviewConfigChange(savedConfig);
       setDraft(savedConfig);
       setHasUnsavedChanges(false);
       setStatus("Saved");
@@ -147,10 +151,8 @@ export function SettingsPanel({
   };
 
   const resetChanges = () => {
-    const savedConfig = savedConfigRef.current;
-
     setDraft(savedConfig);
-    onConfigChange(savedConfig);
+    onPreviewConfigChange(savedConfig);
     setHasUnsavedChanges(false);
     setStatus("");
   };
@@ -435,4 +437,11 @@ function parseGradient(value: string): GradientDraft {
     from: colors?.[0] ?? "#0f766e",
     to: colors?.[colors.length - 1] ?? "#4f46e5"
   };
+}
+
+function configsAreDifferent(
+  firstConfig: MorphTermConfig,
+  secondConfig: MorphTermConfig
+): boolean {
+  return JSON.stringify(firstConfig) !== JSON.stringify(secondConfig);
 }

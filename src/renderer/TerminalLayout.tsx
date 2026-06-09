@@ -36,10 +36,10 @@ function createLayoutStyle(config: MorphTermConfig): CSSProperties {
   const accentColor = getBackgroundAccent(config);
 
   return {
-    "--flux-scrollbar-thumb": withAlpha(accentColor, 0.72),
-    "--flux-scrollbar-thumb-hover": withAlpha(accentColor, 0.92),
-    "--flux-scrollbar-track": withAlpha("#0f1115", 0.42),
-    "--flux-readability-opacity":
+    "--morph-scrollbar-thumb": withAlpha(accentColor, 0.72),
+    "--morph-scrollbar-thumb-hover": withAlpha(accentColor, 0.92),
+    "--morph-scrollbar-track": withAlpha("#0f1115", 0.42),
+    "--morph-readability-opacity":
       config.appearance.background.type === "image" ? 0.18 : 0.38
   } as CSSProperties;
 }

@@ -14,7 +14,9 @@ export function TerminalView() {
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const sessionIdRef = useRef<string | null>(null);
-  const [activeConfig, setActiveConfig] = useState<MorphTermConfig>(defaultConfig);
+  const [savedConfig, setSavedConfig] = useState<MorphTermConfig>(defaultConfig);
+  const [previewConfig, setPreviewConfig] =
+    useState<MorphTermConfig>(defaultConfig);
   const [backgroundImageDataUrl, setBackgroundImageDataUrl] = useState<
     string | null
   >(null);
@@ -27,10 +29,10 @@ export function TerminalView() {
       return;
     }
 
-    terminal.options.fontFamily = activeConfig.fontFamily;
-    terminal.options.fontSize = activeConfig.fontSize;
+    terminal.options.fontFamily = previewConfig.fontFamily;
+    terminal.options.fontSize = previewConfig.fontSize;
     terminal.options.theme = {
-      ...activeConfig.terminalTheme,
+      ...previewConfig.terminalTheme,
       background: "#00000000"
     };
 
@@ -48,10 +50,10 @@ export function TerminalView() {
         });
       }
     });
-  }, [activeConfig]);
+  }, [previewConfig]);
 
   useEffect(() => {
-    const background = activeConfig.appearance.background;
+    const background = previewConfig.appearance.background;
 
     if (background.type !== "image" || !background.value) {
       setBackgroundImageDataUrl(null);
@@ -84,7 +86,7 @@ export function TerminalView() {
     return () => {
       disposed = true;
     };
-  }, [activeConfig.appearance.background.type, activeConfig.appearance.background.value]);
+  }, [previewConfig.appearance.background.type, previewConfig.appearance.background.value]);
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
@@ -125,7 +127,8 @@ export function TerminalView() {
           return;
         }
 
-        setActiveConfig(config);
+        setSavedConfig(config);
+        setPreviewConfig(config);
         cleanupTerminal = createTerminalSession(container, config);
       })
       .catch((error: unknown) => {
@@ -134,7 +137,8 @@ export function TerminalView() {
         }
 
         container.textContent = `Failed to load config: ${String(error)}`;
-        setActiveConfig(defaultConfig);
+        setSavedConfig(defaultConfig);
+        setPreviewConfig(defaultConfig);
         cleanupTerminal = createTerminalSession(container, defaultConfig);
       });
 
@@ -267,7 +271,7 @@ export function TerminalView() {
 
   return (
     <TerminalLayout
-      config={activeConfig}
+      config={previewConfig}
       effectLayerRef={effectLayerRef}
       backgroundImageDataUrl={backgroundImageDataUrl}
     >
@@ -281,10 +285,12 @@ export function TerminalView() {
         </button>
       )}
       <SettingsPanel
-        config={activeConfig}
+        previewConfig={previewConfig}
+        savedConfig={savedConfig}
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onConfigChange={setActiveConfig}
+        onPreviewConfigChange={setPreviewConfig}
+        onSavedConfigChange={setSavedConfig}
       />
       <div ref={containerRef} className="terminal-view" />
     </TerminalLayout>
