@@ -1,21 +1,28 @@
 import type { ITheme } from "@xterm/xterm";
 
 export interface FluxTermBackgroundConfig {
-  color: string;
-  image: string | null;
-  imageOpacity: number;
+  type: "color" | "image" | "gradient";
+  value: string;
+  opacity: number;
+  blur: number;
+}
+
+export interface FluxTermAppearanceConfig {
+  background: FluxTermBackgroundConfig;
 }
 
 export interface FluxTermConfig {
   fontFamily: string;
   fontSize: number;
   terminalTheme: ITheme;
-  background: FluxTermBackgroundConfig;
+  appearance: FluxTermAppearanceConfig;
 }
 
 export type FluxTermConfigUpdate = Partial<{
   fontFamily: string;
   fontSize: number;
   terminalTheme: Partial<ITheme>;
-  background: Partial<FluxTermBackgroundConfig>;
+  appearance: Partial<{
+    background: Partial<FluxTermBackgroundConfig>;
+  }>;
 }>;

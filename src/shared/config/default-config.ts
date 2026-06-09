@@ -25,9 +25,12 @@ export const defaultConfig: FluxTermConfig = {
     brightCyan: "#8fbcbb",
     brightWhite: "#eceff4"
   },
-  background: {
-    color: "#0f1115",
-    image: null,
-    imageOpacity: 0.28
+  appearance: {
+    background: {
+      type: "color",
+      value: "#0f1115",
+      opacity: 1,
+      blur: 0
+    }
   }
 };

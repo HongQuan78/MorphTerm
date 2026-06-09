@@ -1,12 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { TerminalLayout } from "./TerminalLayout";
 import { defaultConfig } from "../shared/config/default-config";
 import type { FluxTermConfig } from "../shared/config/config-types";
 
 export function TerminalView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activeConfig, setActiveConfig] = useState<FluxTermConfig>(defaultConfig);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -32,6 +34,7 @@ export function TerminalView() {
           return;
         }
 
+        setActiveConfig(config);
         cleanupTerminal = createTerminalSession(container, config);
       })
       .catch((error: unknown) => {
@@ -40,6 +43,7 @@ export function TerminalView() {
         }
 
         container.textContent = `Failed to load config: ${String(error)}`;
+        setActiveConfig(defaultConfig);
         cleanupTerminal = createTerminalSession(container, defaultConfig);
       });
 
@@ -47,7 +51,10 @@ export function TerminalView() {
       terminalContainer: HTMLDivElement,
       config: FluxTermConfig
     ): () => void {
-      applyBackgroundConfig(terminalContainer, config);
+      const terminalTheme = {
+        ...config.terminalTheme,
+        background: "#00000000"
+      };
 
       terminal = new Terminal({
         cursorBlink: true,
@@ -55,7 +62,7 @@ export function TerminalView() {
         fontSize: config.fontSize,
         lineHeight: 1.2,
         scrollback: 5000,
-        theme: config.terminalTheme
+        theme: terminalTheme
       });
       const fitAddon = new FitAddon();
 
@@ -149,24 +156,9 @@ export function TerminalView() {
     };
   }, []);
 
-  return <div ref={containerRef} className="terminal-view" />;
-}
-
-function applyBackgroundConfig(
-  container: HTMLDivElement,
-  config: FluxTermConfig
-): void {
-  container.style.backgroundColor = config.background.color;
-
-  if (config.background.image) {
-    container.style.backgroundImage = `linear-gradient(rgba(15, 17, 21, ${
-      1 - config.background.imageOpacity
-    }), rgba(15, 17, 21, ${
-      1 - config.background.imageOpacity
-    })), url("${config.background.image}")`;
-    container.style.backgroundSize = "cover";
-    container.style.backgroundPosition = "center";
-  } else {
-    container.style.backgroundImage = "none";
-  }
+  return (
+    <TerminalLayout config={activeConfig}>
+      <div ref={containerRef} className="terminal-view" />
+    </TerminalLayout>
+  );
 }

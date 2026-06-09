@@ -4,6 +4,7 @@ import { shell } from "electron";
 import { defaultConfig } from "../shared/config/default-config";
 import type {
   FluxTermConfig,
+  FluxTermBackgroundConfig,
   FluxTermConfigUpdate
 } from "../shared/config/config-types";
 
@@ -67,15 +68,54 @@ function mergeConfig(
   base: FluxTermConfig = defaultConfig
 ): FluxTermConfig {
   return {
-    ...base,
-    ...update,
+    fontFamily: update.fontFamily ?? base.fontFamily,
+    fontSize: update.fontSize ?? base.fontSize,
     terminalTheme: {
       ...base.terminalTheme,
       ...update.terminalTheme
     },
-    background: {
-      ...base.background,
-      ...update.background
+    appearance: {
+      ...base.appearance,
+      ...update.appearance,
+      background: {
+        ...base.appearance.background,
+        ...normalizeLegacyBackground(update),
+        ...update.appearance?.background
+      }
     }
   };
+}
+
+function normalizeLegacyBackground(
+  update: FluxTermConfigUpdate & {
+    background?: {
+      color?: string;
+      image?: string | null;
+      imageOpacity?: number;
+    };
+  }
+): Partial<FluxTermBackgroundConfig> {
+  if (!update.background) {
+    return {};
+  }
+
+  if (update.background.image) {
+    return {
+      type: "image",
+      value: update.background.image,
+      opacity: update.background.imageOpacity ?? 0.28,
+      blur: 0
+    };
+  }
+
+  if (update.background.color) {
+    return {
+      type: "color",
+      value: update.background.color,
+      opacity: 1,
+      blur: 0
+    };
+  }
+
+  return {};
 }

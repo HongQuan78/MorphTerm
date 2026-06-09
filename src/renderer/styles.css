@@ -34,11 +34,39 @@ select {
   background: #0f1115;
 }
 
-.terminal-view {
+.terminal-layout {
+  position: relative;
   width: 100vw;
   height: 100vh;
-  padding: 12px;
+  overflow: hidden;
   background: #0f1115;
+}
+
+.terminal-background,
+.terminal-readability-overlay,
+.terminal-content {
+  position: absolute;
+  inset: 0;
+}
+
+.terminal-background {
+  transform: scale(1.02);
+}
+
+.terminal-readability-overlay {
+  background:
+    linear-gradient(rgba(15, 17, 21, 0.38), rgba(15, 17, 21, 0.38)),
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.04), transparent 55%);
+  pointer-events: none;
+}
+
+.terminal-content {
+  padding: 12px;
+}
+
+.terminal-view {
+  width: 100%;
+  height: 100%;
 }
 
 .terminal-view .xterm {
@@ -46,6 +74,9 @@ select {
   height: 100%;
 }
 
+.terminal-view .xterm,
+.terminal-view .xterm-screen,
+.terminal-view .xterm-helpers,
 .terminal-view .xterm-viewport {
   background: transparent;
 }
