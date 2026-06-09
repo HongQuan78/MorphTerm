@@ -33,6 +33,7 @@ function createMainWindow(): void {
     minWidth: 800,
     minHeight: 520,
     title: appInfo.name,
+    icon: getAppIconPath(),
     backgroundColor: "#101214",
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.js"),
@@ -47,6 +48,14 @@ function createMainWindow(): void {
   } else {
     void mainWindow.loadURL(rendererDevUrl);
   }
+}
+
+function getAppIconPath(): string {
+  if (app.isPackaged) {
+    return path.join(__dirname, "../renderer/app-icon.png");
+  }
+
+  return path.join(process.cwd(), "public", "app-icon.png");
 }
 
 app.on("ready", () => {
