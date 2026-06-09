@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { SettingsPanel } from "./SettingsPanel";
 import { TerminalLayout } from "./TerminalLayout";
 import type { EffectLayerHandle } from "./EffectLayer";
 import { defaultConfig } from "../shared/config/default-config";
@@ -10,7 +11,95 @@ import type { FluxTermConfig } from "../shared/config/config-types";
 export function TerminalView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const effectLayerRef = useRef<EffectLayerHandle | null>(null);
+  const terminalRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
   const [activeConfig, setActiveConfig] = useState<FluxTermConfig>(defaultConfig);
+  const [backgroundImageDataUrl, setBackgroundImageDataUrl] = useState<
+    string | null
+  >(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const terminal = terminalRef.current;
+
+    if (!terminal) {
+      return;
+    }
+
+    terminal.options.fontFamily = activeConfig.fontFamily;
+    terminal.options.fontSize = activeConfig.fontSize;
+    terminal.options.theme = {
+      ...activeConfig.terminalTheme,
+      background: "#00000000"
+    };
+
+    requestAnimationFrame(() => {
+      const terminal = terminalRef.current;
+      const sessionId = sessionIdRef.current;
+
+      fitAddonRef.current?.fit();
+
+      if (terminal && sessionId) {
+        void window.fluxTerm.terminal.resize({
+          id: sessionId,
+          cols: terminal.cols,
+          rows: terminal.rows
+        });
+      }
+    });
+  }, [activeConfig]);
+
+  useEffect(() => {
+    const background = activeConfig.appearance.background;
+
+    if (background.type !== "image" || !background.value) {
+      setBackgroundImageDataUrl(null);
+      return;
+    }
+
+    let disposed = false;
+    const configApi = window.fluxTerm.config as typeof window.fluxTerm.config & {
+      getBackgroundImageData?: (imagePath: string) => Promise<string | null>;
+    };
+
+    if (typeof configApi.getBackgroundImageData !== "function") {
+      setBackgroundImageDataUrl(null);
+      return;
+    }
+
+    void configApi
+      .getBackgroundImageData(background.value)
+      .then((dataUrl) => {
+        if (!disposed) {
+          setBackgroundImageDataUrl(dataUrl);
+        }
+      })
+      .catch(() => {
+        if (!disposed) {
+          setBackgroundImageDataUrl(null);
+        }
+      });
+
+    return () => {
+      disposed = true;
+    };
+  }, [activeConfig.appearance.background.type, activeConfig.appearance.background.value]);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === ",") {
+        event.preventDefault();
+        setIsSettingsOpen((isOpen) => !isOpen);
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+
+    return () => {
+      window.removeEventListener("keydown", handleShortcut);
+    };
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -67,6 +156,8 @@ export function TerminalView() {
         theme: terminalTheme
       });
       const fitAddon = new FitAddon();
+      terminalRef.current = terminal;
+      fitAddonRef.current = fitAddon;
 
       terminal.loadAddon(fitAddon);
       terminal.open(terminalContainer);
@@ -139,6 +230,7 @@ export function TerminalView() {
           }
 
           sessionId = session.id;
+          sessionIdRef.current = session.id;
           resizeTerminal();
           focusTerminal();
         })
@@ -160,7 +252,10 @@ export function TerminalView() {
 
         terminal?.dispose();
         terminal = null;
+        terminalRef.current = null;
+        fitAddonRef.current = null;
         sessionId = null;
+        sessionIdRef.current = null;
       };
     }
 
@@ -171,7 +266,26 @@ export function TerminalView() {
   }, []);
 
   return (
-    <TerminalLayout config={activeConfig} effectLayerRef={effectLayerRef}>
+    <TerminalLayout
+      config={activeConfig}
+      effectLayerRef={effectLayerRef}
+      backgroundImageDataUrl={backgroundImageDataUrl}
+    >
+      {!isSettingsOpen && (
+        <button
+          type="button"
+          className="settings-toggle"
+          onClick={() => setIsSettingsOpen(true)}
+        >
+          Settings
+        </button>
+      )}
+      <SettingsPanel
+        config={activeConfig}
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onConfigChange={setActiveConfig}
+      />
       <div ref={containerRef} className="terminal-view" />
     </TerminalLayout>
   );

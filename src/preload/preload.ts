@@ -27,6 +27,12 @@ const fluxTermApi = {
     },
     openConfigFile(): Promise<void> {
       return ipcRenderer.invoke(configChannels.openConfigFile);
+    },
+    selectBackgroundImage(): Promise<string | null> {
+      return ipcRenderer.invoke(configChannels.selectBackgroundImage);
+    },
+    getBackgroundImageData(imagePath: string): Promise<string | null> {
+      return ipcRenderer.invoke(configChannels.getBackgroundImageData, imagePath);
     }
   },
   terminal: {
