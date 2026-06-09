@@ -1,0 +1,114 @@
+:root {
+  color: #eceff4;
+  background: #101214;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+  background:
+    linear-gradient(135deg, rgba(88, 166, 255, 0.16), transparent 34%),
+    linear-gradient(315deg, rgba(63, 185, 80, 0.12), transparent 38%),
+    #101214;
+}
+
+.intro-panel {
+  width: min(760px, 100%);
+  border: 1px solid rgba(236, 239, 244, 0.12);
+  border-radius: 8px;
+  padding: 36px;
+  background: rgba(16, 18, 20, 0.82);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #8fbcbb;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  line-height: 0.95;
+}
+
+.lede {
+  max-width: 620px;
+  margin: 22px 0 0;
+  color: #c6ccd7;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 32px 0 0;
+  overflow: hidden;
+  border: 1px solid rgba(236, 239, 244, 0.12);
+  border-radius: 8px;
+  background: rgba(236, 239, 244, 0.12);
+}
+
+.status-grid > div {
+  min-width: 0;
+  padding: 18px;
+  background: rgba(21, 24, 27, 0.94);
+}
+
+dt {
+  color: #94a1b2;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+dd {
+  margin: 8px 0 0;
+  color: #f7f8fb;
+  font-size: 1rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .intro-panel {
+    padding: 28px;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+}
