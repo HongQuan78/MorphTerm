@@ -35,5 +35,10 @@ export const defaultConfig: MorphTermConfig = {
   },
   effects: {
     typingEffect: "spark"
+  },
+  shell: {
+    profile: "system",
+    customPath: "",
+    customArgs: []
   }
 };

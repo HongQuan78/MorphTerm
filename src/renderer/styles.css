@@ -665,6 +665,13 @@ select {
   font-size: 0.82rem;
 }
 
+.settings-note {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .effect-layer {
   z-index: 2;
   width: 100%;

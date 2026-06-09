@@ -17,12 +17,26 @@ export interface MorphTermEffectsConfig {
   typingEffect: MorphTermTypingEffect;
 }
 
+export type MorphTermShellProfile =
+  | "system"
+  | "powershell"
+  | "cmd"
+  | "git-bash"
+  | "custom";
+
+export interface MorphTermShellConfig {
+  profile: MorphTermShellProfile;
+  customPath: string;
+  customArgs: string[];
+}
+
 export interface MorphTermConfig {
   fontFamily: string;
   fontSize: number;
   terminalTheme: ITheme;
   appearance: MorphTermAppearanceConfig;
   effects: MorphTermEffectsConfig;
+  shell: MorphTermShellConfig;
 }
 
 export type MorphTermConfigUpdate = Partial<{
@@ -33,4 +47,5 @@ export type MorphTermConfigUpdate = Partial<{
     background: Partial<MorphTermBackgroundConfig>;
   }>;
   effects: Partial<MorphTermEffectsConfig>;
+  shell: Partial<MorphTermShellConfig>;
 }>;

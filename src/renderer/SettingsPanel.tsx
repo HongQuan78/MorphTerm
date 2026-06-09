@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
+  MorphTermShellProfile,
   MorphTermTypingEffect
 } from "../shared/config/config-types";
 
@@ -35,6 +36,25 @@ const gradientPresets: Array<{ name: string; value: string }> = [
   }
 ];
 
+const windowsShellProfiles: Array<{
+  value: MorphTermShellProfile;
+  label: string;
+}> = [
+  { value: "system", label: "System default" },
+  { value: "powershell", label: "PowerShell" },
+  { value: "cmd", label: "Command Prompt" },
+  { value: "git-bash", label: "Git Bash" },
+  { value: "custom", label: "Custom" }
+];
+
+const unixShellProfiles: Array<{
+  value: MorphTermShellProfile;
+  label: string;
+}> = [
+  { value: "system", label: "System shell" },
+  { value: "custom", label: "Custom" }
+];
+
 export function SettingsPanel({
   previewConfig,
   savedConfig,
@@ -50,6 +70,8 @@ export function SettingsPanel({
     () => parseGradient(draft.appearance.background.value),
     [draft.appearance.background.value]
   );
+  const shellProfiles =
+    window.morphTerm.platform === "win32" ? windowsShellProfiles : unixShellProfiles;
 
   useEffect(() => {
     setDraft(previewConfig);
@@ -235,6 +257,78 @@ export function SettingsPanel({
             />
           </label>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <h3>Shell</h3>
+        <label>
+          Default shell
+          <select
+            value={draft.shell.profile}
+            onChange={(event) =>
+              updateDraft({
+                ...draft,
+                shell: {
+                  ...draft.shell,
+                  profile: event.target.value as MorphTermShellProfile
+                }
+              })
+            }
+          >
+            {shellProfiles.map((profile) => (
+              <option key={profile.value} value={profile.value}>
+                {profile.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {draft.shell.profile === "custom" && (
+          <>
+            <label>
+              Shell path
+              <input
+                value={draft.shell.customPath}
+                placeholder={
+                  window.morphTerm.platform === "win32"
+                    ? "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
+                    : "/bin/zsh"
+                }
+                onChange={(event) =>
+                  updateDraft({
+                    ...draft,
+                    shell: {
+                      ...draft.shell,
+                      customPath: event.target.value
+                    }
+                  })
+                }
+              />
+            </label>
+
+            <label>
+              Arguments
+              <input
+                value={draft.shell.customArgs.join(" ")}
+                placeholder="-NoLogo or --login -i"
+                onChange={(event) =>
+                  updateDraft({
+                    ...draft,
+                    shell: {
+                      ...draft.shell,
+                      customArgs: parseShellArgs(event.target.value)
+                    }
+                  })
+                }
+              />
+            </label>
+          </>
+        )}
+
+        <p className="settings-note">
+          Shell changes apply to new tabs or panes. Running sessions stay on their
+          current shell.
+        </p>
       </section>
 
       <section className="settings-section">
@@ -461,4 +555,11 @@ function configsAreDifferent(
 
 function formatOpacity(opacity: number): string {
   return opacity.toFixed(2).replace(/0$/, "");
+}
+
+function parseShellArgs(value: string): string[] {
+  return value
+    .split(" ")
+    .map((argument) => argument.trim())
+    .filter(Boolean);
 }

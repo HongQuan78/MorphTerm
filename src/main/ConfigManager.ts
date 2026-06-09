@@ -84,6 +84,13 @@ function mergeConfig(
     effects: {
       ...base.effects,
       ...update.effects
+    },
+    shell: {
+      ...base.shell,
+      ...update.shell,
+      customArgs: Array.isArray(update.shell?.customArgs)
+        ? update.shell.customArgs
+        : base.shell.customArgs
     }
   };
 }

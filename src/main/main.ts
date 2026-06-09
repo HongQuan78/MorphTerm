@@ -8,8 +8,8 @@ import { registerTerminalIpc } from "./registerTerminalIpc";
 import { appInfo } from "../shared/appInfo";
 
 const rendererDevUrl = "http://127.0.0.1:5173";
-const terminalManager = new TerminalManager();
 let configManager: ConfigManager;
+let terminalManager: TerminalManager;
 let configPath: string | undefined;
 
 if (!app.isPackaged) {
@@ -54,6 +54,7 @@ app.on("ready", () => {
     configPath ?? path.join(app.getPath("userData"), "config", "config.json")
   );
   configManager.load();
+  terminalManager = new TerminalManager(() => configManager.get());
   registerConfigIpc(configManager);
   registerTerminalIpc(terminalManager);
   createMainWindow();
@@ -66,7 +67,7 @@ app.on("activate", () => {
 });
 
 app.on("window-all-closed", () => {
-  terminalManager.disposeAll();
+  terminalManager?.disposeAll();
 
   if (process.platform !== "darwin") {
     app.quit();

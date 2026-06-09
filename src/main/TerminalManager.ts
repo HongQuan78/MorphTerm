@@ -1,9 +1,15 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
 import os from "node:os";
 import type { WebContents } from "electron";
 import type { IDisposable, IPty } from "node-pty";
 import * as pty from "node-pty";
 import { terminalChannels } from "../shared/terminalIpc";
+import { defaultConfig } from "../shared/config/default-config";
+import type {
+  MorphTermConfig,
+  MorphTermShellConfig
+} from "../shared/config/config-types";
 import type {
   TerminalAttachRequest,
   TerminalAttachResult,
@@ -12,6 +18,12 @@ import type {
 } from "../shared/terminalIpc";
 
 const maxSessionHistoryLength = 200_000;
+type ConfigProvider = () => MorphTermConfig;
+
+interface ShellLaunchConfig {
+  shell: string;
+  args: string[];
+}
 
 interface TerminalSession {
   id: string;
@@ -26,12 +38,14 @@ interface TerminalSession {
 export class TerminalManager {
   private sessions = new Map<string, TerminalSession>();
 
+  constructor(private getConfig: ConfigProvider = () => defaultConfig) {}
+
   create(
     webContents: WebContents,
     options: TerminalCreateRequest = {}
   ): TerminalCreateResult {
-    const shell = getDefaultShell();
-    const terminalProcess = pty.spawn(shell, getDefaultShellArgs(), {
+    const shellLaunchConfig = getShellLaunchConfig(this.getConfig().shell);
+    const terminalProcess = pty.spawn(shellLaunchConfig.shell, shellLaunchConfig.args, {
       name: "xterm-256color",
       cols: options.cols ?? 80,
       rows: options.rows ?? 24,
@@ -72,7 +86,7 @@ export class TerminalManager {
     this.sessions.set(id, {
       id,
       process: terminalProcess,
-      shell,
+      shell: shellLaunchConfig.shell,
       webContents,
       history: "",
       dataSubscription,
@@ -82,7 +96,7 @@ export class TerminalManager {
     return {
       id,
       pid: terminalProcess.pid,
-      shell,
+      shell: shellLaunchConfig.shell,
       history: ""
     };
   }
@@ -155,26 +169,62 @@ export class TerminalManager {
   }
 }
 
-function getDefaultShell(): string {
-  if (process.platform === "win32") {
-    return "powershell.exe";
+function getShellLaunchConfig(shellConfig: MorphTermShellConfig): ShellLaunchConfig {
+  if (shellConfig.profile === "custom" && shellConfig.customPath.trim()) {
+    return {
+      shell: shellConfig.customPath.trim(),
+      args: shellConfig.customArgs
+    };
   }
 
-  return process.env.SHELL || "/bin/bash";
+  if (process.platform !== "win32") {
+    return {
+      shell: process.env.SHELL || "/bin/bash",
+      args: []
+    };
+  }
+
+  if (shellConfig.profile === "cmd") {
+    return {
+      shell: "cmd.exe",
+      args: []
+    };
+  }
+
+  if (shellConfig.profile === "git-bash") {
+    const gitBashPath = getGitBashPath();
+
+    if (gitBashPath) {
+      return {
+        shell: gitBashPath,
+        args: ["--login", "-i"]
+      };
+    }
+  }
+
+  return {
+    shell: "powershell.exe",
+    args: getPowerShellArgs()
+  };
 }
 
-function getDefaultShellArgs(): string[] {
-  if (process.platform === "win32") {
-    return [
-      "-NoLogo",
-      "-NoProfile",
-      "-NoExit",
-      "-Command",
-      "Set-PSReadLineOption -HistorySaveStyle SaveNothing"
-    ];
-  }
+function getGitBashPath(): string | null {
+  const candidates = [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "C:\\Program Files (x86)\\Git\\bin\\bash.exe"
+  ];
 
-  return [];
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
+function getPowerShellArgs(): string[] {
+  return [
+    "-NoLogo",
+    "-NoProfile",
+    "-NoExit",
+    "-Command",
+    "Set-PSReadLineOption -HistorySaveStyle SaveNothing"
+  ];
 }
 
 function getDefaultWorkingDirectory(): string {
