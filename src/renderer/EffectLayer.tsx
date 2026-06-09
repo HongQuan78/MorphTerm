@@ -4,14 +4,14 @@ import {
   useImperativeHandle,
   useRef
 } from "react";
-import type { FluxTermTypingEffect } from "../shared/config/config-types";
+import type { MorphTermTypingEffect } from "../shared/config/config-types";
 
 export interface EffectLayerHandle {
   triggerTypingEffect(origin: { x: number; y: number }): void;
 }
 
 interface EffectLayerProps {
-  typingEffect: FluxTermTypingEffect;
+  typingEffect: MorphTermTypingEffect;
 }
 
 interface Particle {

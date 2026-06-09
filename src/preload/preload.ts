@@ -3,8 +3,8 @@ import { appInfo } from "../shared/appInfo";
 import { configChannels } from "../shared/config/config-ipc";
 import { terminalChannels } from "../shared/terminalIpc";
 import type {
-  FluxTermConfig,
-  FluxTermConfigUpdate
+  MorphTermConfig,
+  MorphTermConfigUpdate
 } from "../shared/config/config-types";
 import type {
   TerminalCreateRequest,
@@ -15,14 +15,14 @@ import type {
   TerminalWriteRequest
 } from "../shared/terminalIpc";
 
-const fluxTermApi = {
+const morphTermApi = {
   appInfo,
   platform: process.platform,
   config: {
-    get(): Promise<FluxTermConfig> {
+    get(): Promise<MorphTermConfig> {
       return ipcRenderer.invoke(configChannels.get);
     },
-    update(update: FluxTermConfigUpdate): Promise<FluxTermConfig> {
+    update(update: MorphTermConfigUpdate): Promise<MorphTermConfig> {
       return ipcRenderer.invoke(configChannels.update, update);
     },
     openConfigFile(): Promise<void> {
@@ -62,6 +62,6 @@ const fluxTermApi = {
   }
 };
 
-contextBridge.exposeInMainWorld("fluxTerm", fluxTermApi);
+contextBridge.exposeInMainWorld("morphTerm", morphTermApi);
 
-export type FluxTermApi = typeof fluxTermApi;
+export type MorphTermApi = typeof morphTermApi;

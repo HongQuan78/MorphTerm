@@ -1,6 +1,6 @@
-import type { FluxTermConfig } from "./config-types";
+import type { MorphTermConfig } from "./config-types";
 
-export const defaultConfig: FluxTermConfig = {
+export const defaultConfig: MorphTermConfig = {
   fontFamily: "Cascadia Mono, Consolas, Menlo, Monaco, 'Courier New', monospace",
   fontSize: 14,
   terminalTheme: {

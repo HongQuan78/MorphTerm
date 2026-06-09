@@ -6,7 +6,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { TerminalLayout } from "./TerminalLayout";
 import type { EffectLayerHandle } from "./EffectLayer";
 import { defaultConfig } from "../shared/config/default-config";
-import type { FluxTermConfig } from "../shared/config/config-types";
+import type { MorphTermConfig } from "../shared/config/config-types";
 
 export function TerminalView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -14,7 +14,7 @@ export function TerminalView() {
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const sessionIdRef = useRef<string | null>(null);
-  const [activeConfig, setActiveConfig] = useState<FluxTermConfig>(defaultConfig);
+  const [activeConfig, setActiveConfig] = useState<MorphTermConfig>(defaultConfig);
   const [backgroundImageDataUrl, setBackgroundImageDataUrl] = useState<
     string | null
   >(null);
@@ -41,7 +41,7 @@ export function TerminalView() {
       fitAddonRef.current?.fit();
 
       if (terminal && sessionId) {
-        void window.fluxTerm.terminal.resize({
+        void window.morphTerm.terminal.resize({
           id: sessionId,
           cols: terminal.cols,
           rows: terminal.rows
@@ -59,7 +59,7 @@ export function TerminalView() {
     }
 
     let disposed = false;
-    const configApi = window.fluxTerm.config as typeof window.fluxTerm.config & {
+    const configApi = window.morphTerm.config as typeof window.morphTerm.config & {
       getBackgroundImageData?: (imagePath: string) => Promise<string | null>;
     };
 
@@ -108,7 +108,7 @@ export function TerminalView() {
       return;
     }
 
-    if (!window.fluxTerm?.terminal || !window.fluxTerm?.config) {
+    if (!window.morphTerm?.terminal || !window.morphTerm?.config) {
       container.textContent = "MorphTerm terminal IPC is not available.";
       return;
     }
@@ -118,7 +118,7 @@ export function TerminalView() {
     let disposed = false;
     let cleanupTerminal: (() => void) | null = null;
 
-    void window.fluxTerm.config
+    void window.morphTerm.config
       .get()
       .then((config) => {
         if (disposed) {
@@ -140,7 +140,7 @@ export function TerminalView() {
 
     function createTerminalSession(
       terminalContainer: HTMLDivElement,
-      config: FluxTermConfig
+      config: MorphTermConfig
     ): () => void {
       const terminalTheme = {
         ...config.terminalTheme,
@@ -166,7 +166,7 @@ export function TerminalView() {
         fitAddon.fit();
 
         if (sessionId && terminal) {
-          void window.fluxTerm.terminal.resize({
+          void window.morphTerm.terminal.resize({
             id: sessionId,
             cols: terminal.cols,
             rows: terminal.rows
@@ -183,7 +183,7 @@ export function TerminalView() {
           return;
         }
 
-        void window.fluxTerm.terminal.write({
+        void window.morphTerm.terminal.write({
           id: sessionId,
           data
         });
@@ -201,7 +201,7 @@ export function TerminalView() {
         }
       });
 
-      const removeDataListener = window.fluxTerm.terminal.onData((event) => {
+      const removeDataListener = window.morphTerm.terminal.onData((event) => {
         if (terminal && (!sessionId || event.id === sessionId)) {
           terminal.write(event.data);
         }
@@ -218,14 +218,14 @@ export function TerminalView() {
         focusTerminal();
       });
 
-      void window.fluxTerm.terminal
+      void window.morphTerm.terminal
         .create({
           cols: terminal.cols,
           rows: terminal.rows
         })
         .then((session) => {
           if (disposed) {
-            void window.fluxTerm.terminal.dispose({ id: session.id });
+            void window.morphTerm.terminal.dispose({ id: session.id });
             return;
           }
 
@@ -247,7 +247,7 @@ export function TerminalView() {
         inputDisposable.dispose();
 
         if (sessionId) {
-          void window.fluxTerm.terminal.dispose({ id: sessionId });
+          void window.morphTerm.terminal.dispose({ id: sessionId });
         }
 
         terminal?.dispose();

@@ -1,5 +1,4 @@
 import { app, BrowserWindow } from "electron";
-import fs from "node:fs";
 import path from "node:path";
 import { ConfigManager } from "./ConfigManager";
 import { TerminalManager } from "./TerminalManager";
@@ -12,12 +11,7 @@ const terminalManager = new TerminalManager();
 let configManager: ConfigManager;
 
 if (!app.isPackaged) {
-  const userDataPath = path.join(process.cwd(), ".morphterm-dev");
-  migrateDevConfig(
-    path.join(process.cwd(), ".fluxterm-dev"),
-    userDataPath
-  );
-  app.setPath("userData", userDataPath);
+  app.setPath("userData", path.join(process.cwd(), ".morphterm-dev"));
 }
 
 app.disableHardwareAcceleration();
@@ -69,15 +63,3 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
-
-function migrateDevConfig(legacyUserDataPath: string, userDataPath: string): void {
-  const legacyConfigPath = path.join(legacyUserDataPath, "config.json");
-  const configPath = path.join(userDataPath, "config.json");
-
-  if (fs.existsSync(configPath) || !fs.existsSync(legacyConfigPath)) {
-    return;
-  }
-
-  fs.mkdirSync(userDataPath, { recursive: true });
-  fs.copyFileSync(legacyConfigPath, configPath);
-}

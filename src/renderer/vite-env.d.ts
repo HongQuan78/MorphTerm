@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 
-import type { FluxTermApi } from "../preload/preload";
+import type { MorphTermApi } from "../preload/preload";
 
 declare global {
   interface Window {
-    fluxTerm: FluxTermApi;
+    morphTerm: MorphTermApi;
   }
 }

@@ -3,22 +3,22 @@ import path from "node:path";
 import { shell } from "electron";
 import { defaultConfig } from "../shared/config/default-config";
 import type {
-  FluxTermConfig,
-  FluxTermBackgroundConfig,
-  FluxTermConfigUpdate
+  MorphTermConfig,
+  MorphTermBackgroundConfig,
+  MorphTermConfigUpdate
 } from "../shared/config/config-types";
 
 const configFileName = "config.json";
 
 export class ConfigManager {
   private configPath: string;
-  private config: FluxTermConfig = defaultConfig;
+  private config: MorphTermConfig = defaultConfig;
 
   constructor(userDataPath: string) {
     this.configPath = path.join(userDataPath, configFileName);
   }
 
-  load(): FluxTermConfig {
+  load(): MorphTermConfig {
     fs.mkdirSync(path.dirname(this.configPath), { recursive: true });
 
     if (!fs.existsSync(this.configPath)) {
@@ -29,7 +29,7 @@ export class ConfigManager {
 
     try {
       const rawConfig = fs.readFileSync(this.configPath, "utf8");
-      this.config = mergeConfig(JSON.parse(rawConfig) as FluxTermConfigUpdate);
+      this.config = mergeConfig(JSON.parse(rawConfig) as MorphTermConfigUpdate);
     } catch {
       this.config = defaultConfig;
     }
@@ -39,11 +39,11 @@ export class ConfigManager {
     return this.config;
   }
 
-  get(): FluxTermConfig {
+  get(): MorphTermConfig {
     return this.config;
   }
 
-  update(update: FluxTermConfigUpdate): FluxTermConfig {
+  update(update: MorphTermConfigUpdate): MorphTermConfig {
     this.config = mergeConfig(update, this.config);
     this.writeConfig();
 
@@ -64,9 +64,9 @@ export class ConfigManager {
 }
 
 function mergeConfig(
-  update: FluxTermConfigUpdate,
-  base: FluxTermConfig = defaultConfig
-): FluxTermConfig {
+  update: MorphTermConfigUpdate,
+  base: MorphTermConfig = defaultConfig
+): MorphTermConfig {
   return {
     fontFamily: update.fontFamily ?? base.fontFamily,
     fontSize: update.fontSize ?? base.fontSize,
@@ -91,14 +91,14 @@ function mergeConfig(
 }
 
 function normalizeLegacyBackground(
-  update: FluxTermConfigUpdate & {
+  update: MorphTermConfigUpdate & {
     background?: {
       color?: string;
       image?: string | null;
       imageOpacity?: number;
     };
   }
-): Partial<FluxTermBackgroundConfig> {
+): Partial<MorphTermBackgroundConfig> {
   if (!update.background) {
     return {};
   }

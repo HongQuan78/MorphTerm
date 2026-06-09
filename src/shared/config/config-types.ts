@@ -1,36 +1,36 @@
 import type { ITheme } from "@xterm/xterm";
 
-export interface FluxTermBackgroundConfig {
+export interface MorphTermBackgroundConfig {
   type: "color" | "image" | "gradient";
   value: string;
   opacity: number;
   blur: number;
 }
 
-export interface FluxTermAppearanceConfig {
-  background: FluxTermBackgroundConfig;
+export interface MorphTermAppearanceConfig {
+  background: MorphTermBackgroundConfig;
 }
 
-export type FluxTermTypingEffect = "none" | "spark";
+export type MorphTermTypingEffect = "none" | "spark";
 
-export interface FluxTermEffectsConfig {
-  typingEffect: FluxTermTypingEffect;
+export interface MorphTermEffectsConfig {
+  typingEffect: MorphTermTypingEffect;
 }
 
-export interface FluxTermConfig {
+export interface MorphTermConfig {
   fontFamily: string;
   fontSize: number;
   terminalTheme: ITheme;
-  appearance: FluxTermAppearanceConfig;
-  effects: FluxTermEffectsConfig;
+  appearance: MorphTermAppearanceConfig;
+  effects: MorphTermEffectsConfig;
 }
 
-export type FluxTermConfigUpdate = Partial<{
+export type MorphTermConfigUpdate = Partial<{
   fontFamily: string;
   fontSize: number;
   terminalTheme: Partial<ITheme>;
   appearance: Partial<{
-    background: Partial<FluxTermBackgroundConfig>;
+    background: Partial<MorphTermBackgroundConfig>;
   }>;
-  effects: Partial<FluxTermEffectsConfig>;
+  effects: Partial<MorphTermEffectsConfig>;
 }>;

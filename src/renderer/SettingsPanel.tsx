@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import type {
-  FluxTermBackgroundConfig,
-  FluxTermConfig,
-  FluxTermTypingEffect
+  MorphTermBackgroundConfig,
+  MorphTermConfig,
+  MorphTermTypingEffect
 } from "../shared/config/config-types";
 
 interface SettingsPanelProps {
-  config: FluxTermConfig;
+  config: MorphTermConfig;
   isOpen: boolean;
   onClose(): void;
-  onConfigChange(config: FluxTermConfig): void;
+  onConfigChange(config: MorphTermConfig): void;
 }
 
 interface GradientDraft {
@@ -39,7 +39,7 @@ export function SettingsPanel({
   onClose,
   onConfigChange
 }: SettingsPanelProps) {
-  const [draft, setDraft] = useState<FluxTermConfig>(config);
+  const [draft, setDraft] = useState<MorphTermConfig>(config);
   const [status, setStatus] = useState("");
   const gradientDraft = useMemo(
     () => parseGradient(draft.appearance.background.value),
@@ -54,20 +54,20 @@ export function SettingsPanel({
     return null;
   }
 
-  const saveConfig = async (nextConfig: FluxTermConfig) => {
+  const saveConfig = async (nextConfig: MorphTermConfig) => {
     setDraft(nextConfig);
     onConfigChange(nextConfig);
-    const savedConfig = await window.fluxTerm.config.update(nextConfig);
+    const savedConfig = await window.morphTerm.config.update(nextConfig);
     onConfigChange(savedConfig);
     setStatus("Saved");
     window.setTimeout(() => setStatus(""), 1000);
   };
 
-  const updateDraft = (nextConfig: FluxTermConfig) => {
+  const updateDraft = (nextConfig: MorphTermConfig) => {
     void saveConfig(nextConfig);
   };
 
-  const updateBackground = (background: Partial<FluxTermBackgroundConfig>) => {
+  const updateBackground = (background: Partial<MorphTermBackgroundConfig>) => {
     updateDraft({
       ...draft,
       appearance: {
@@ -80,12 +80,12 @@ export function SettingsPanel({
     });
   };
 
-  const changeBackgroundType = (type: FluxTermBackgroundConfig["type"]) => {
+  const changeBackgroundType = (type: MorphTermBackgroundConfig["type"]) => {
     if (type === draft.appearance.background.type) {
       return;
     }
 
-    const valueByType: Record<FluxTermBackgroundConfig["type"], string> = {
+    const valueByType: Record<MorphTermBackgroundConfig["type"], string> = {
       color: "#0f1115",
       image: "",
       gradient: gradientPresets[0].value
@@ -107,7 +107,7 @@ export function SettingsPanel({
   const browseImage = async () => {
     try {
       setStatus("Opening file picker...");
-      const configApi = window.fluxTerm.config as typeof window.fluxTerm.config & {
+      const configApi = window.morphTerm.config as typeof window.morphTerm.config & {
         selectBackgroundImage?: () => Promise<string | null>;
       };
 
@@ -356,7 +356,7 @@ export function SettingsPanel({
                 ...draft,
                 effects: {
                   ...draft.effects,
-                  typingEffect: event.target.value as FluxTermTypingEffect
+                  typingEffect: event.target.value as MorphTermTypingEffect
                 }
               })
             }
@@ -371,7 +371,7 @@ export function SettingsPanel({
         <button
           type="button"
           className="ghost-button"
-          onClick={() => void window.fluxTerm.config.openConfigFile()}
+          onClick={() => void window.morphTerm.config.openConfigFile()}
         >
           Open config file
         </button>

@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import { EffectLayer } from "./EffectLayer";
 import type { EffectLayerHandle } from "./EffectLayer";
-import type { FluxTermConfig } from "../shared/config/config-types";
+import type { MorphTermConfig } from "../shared/config/config-types";
 
 interface TerminalLayoutProps {
-  config: FluxTermConfig;
+  config: MorphTermConfig;
   children: ReactNode;
   effectLayerRef?: React.Ref<EffectLayerHandle>;
   backgroundImageDataUrl?: string | null;
@@ -32,7 +32,7 @@ export function TerminalLayout({
   );
 }
 
-function createLayoutStyle(config: FluxTermConfig): CSSProperties {
+function createLayoutStyle(config: MorphTermConfig): CSSProperties {
   const accentColor = getBackgroundAccent(config);
 
   return {
@@ -45,7 +45,7 @@ function createLayoutStyle(config: FluxTermConfig): CSSProperties {
 }
 
 function createBackgroundStyle(
-  config: FluxTermConfig,
+  config: MorphTermConfig,
   backgroundImageDataUrl?: string | null
 ): CSSProperties {
   const background = config.appearance.background;
@@ -85,7 +85,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function getBackgroundAccent(config: FluxTermConfig): string {
+function getBackgroundAccent(config: MorphTermConfig): string {
   const background = config.appearance.background;
 
   if (background.type === "color" && isHexColor(background.value)) {
