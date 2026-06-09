@@ -3,11 +3,13 @@ import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { TerminalLayout } from "./TerminalLayout";
+import type { EffectLayerHandle } from "./EffectLayer";
 import { defaultConfig } from "../shared/config/default-config";
 import type { FluxTermConfig } from "../shared/config/config-types";
 
 export function TerminalView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const effectLayerRef = useRef<EffectLayerHandle | null>(null);
   const [activeConfig, setActiveConfig] = useState<FluxTermConfig>(defaultConfig);
 
   useEffect(() => {
@@ -94,6 +96,18 @@ export function TerminalView() {
           id: sessionId,
           data
         });
+
+        if (isPrintableInput(data) && terminal) {
+          requestAnimationFrame(() => {
+            if (!terminal) {
+              return;
+            }
+
+            effectLayerRef.current?.triggerTypingEffect(
+              getCursorEffectOrigin(terminalContainer, terminal)
+            );
+          });
+        }
       });
 
       const removeDataListener = window.fluxTerm.terminal.onData((event) => {
@@ -157,8 +171,44 @@ export function TerminalView() {
   }, []);
 
   return (
-    <TerminalLayout config={activeConfig}>
+    <TerminalLayout config={activeConfig} effectLayerRef={effectLayerRef}>
       <div ref={containerRef} className="terminal-view" />
     </TerminalLayout>
   );
+}
+
+function isPrintableInput(data: string): boolean {
+  return Array.from(data).some((character) => {
+    const codePoint = character.codePointAt(0);
+
+    return codePoint !== undefined && codePoint >= 0x20 && codePoint !== 0x7f;
+  });
+}
+
+function getCursorEffectOrigin(
+  container: HTMLDivElement,
+  terminal: Terminal
+): { x: number; y: number } {
+  const containerRect = container.getBoundingClientRect();
+  const rowsElement = container.querySelector(".xterm-rows");
+  const firstRow = rowsElement?.firstElementChild;
+  const rowsRect = rowsElement?.getBoundingClientRect();
+  const firstRowRect = firstRow?.getBoundingClientRect();
+
+  if (rowsRect && firstRowRect && terminal.cols > 0) {
+    const cellWidth = rowsRect.width / terminal.cols;
+    const cellHeight = firstRowRect.height || terminal.options.fontSize || 14;
+    const cursorX = terminal.buffer.active.cursorX;
+    const cursorY = terminal.buffer.active.cursorY;
+
+    return {
+      x: rowsRect.left - containerRect.left + cursorX * cellWidth,
+      y: rowsRect.top - containerRect.top + cursorY * cellHeight + cellHeight * 0.55
+    };
+  }
+
+  return {
+    x: 18,
+    y: 24
+  };
 }

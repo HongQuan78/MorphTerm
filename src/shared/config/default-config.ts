@@ -32,5 +32,8 @@ export const defaultConfig: FluxTermConfig = {
       opacity: 1,
       blur: 0
     }
+  },
+  effects: {
+    typingEffect: "spark"
   }
 };

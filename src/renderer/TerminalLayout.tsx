@@ -1,12 +1,19 @@
 import type { CSSProperties, ReactNode } from "react";
+import { EffectLayer } from "./EffectLayer";
+import type { EffectLayerHandle } from "./EffectLayer";
 import type { FluxTermConfig } from "../shared/config/config-types";
 
 interface TerminalLayoutProps {
   config: FluxTermConfig;
   children: ReactNode;
+  effectLayerRef?: React.Ref<EffectLayerHandle>;
 }
 
-export function TerminalLayout({ config, children }: TerminalLayoutProps) {
+export function TerminalLayout({
+  config,
+  children,
+  effectLayerRef
+}: TerminalLayoutProps) {
   const backgroundStyle = createBackgroundStyle(config);
 
   return (
@@ -14,6 +21,10 @@ export function TerminalLayout({ config, children }: TerminalLayoutProps) {
       <div className="terminal-background" style={backgroundStyle} />
       <div className="terminal-readability-overlay" />
       <div className="terminal-content">{children}</div>
+      <EffectLayer
+        ref={effectLayerRef}
+        typingEffect={config.effects.typingEffect}
+      />
     </div>
   );
 }

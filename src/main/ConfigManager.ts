@@ -82,6 +82,10 @@ function mergeConfig(
         ...normalizeLegacyBackground(update),
         ...update.appearance?.background
       }
+    },
+    effects: {
+      ...base.effects,
+      ...update.effects
     }
   };
 }

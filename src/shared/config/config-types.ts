@@ -11,11 +11,18 @@ export interface FluxTermAppearanceConfig {
   background: FluxTermBackgroundConfig;
 }
 
+export type FluxTermTypingEffect = "none" | "spark";
+
+export interface FluxTermEffectsConfig {
+  typingEffect: FluxTermTypingEffect;
+}
+
 export interface FluxTermConfig {
   fontFamily: string;
   fontSize: number;
   terminalTheme: ITheme;
   appearance: FluxTermAppearanceConfig;
+  effects: FluxTermEffectsConfig;
 }
 
 export type FluxTermConfigUpdate = Partial<{
@@ -25,4 +32,5 @@ export type FluxTermConfigUpdate = Partial<{
   appearance: Partial<{
     background: Partial<FluxTermBackgroundConfig>;
   }>;
+  effects: Partial<FluxTermEffectsConfig>;
 }>;
