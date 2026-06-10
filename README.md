@@ -1,20 +1,28 @@
 # MorphTerm
 
-MorphTerm is an open-source customizable desktop terminal inspired by Hyper. It is early in development, but the goal is simple: a practical terminal that feels good to use and is easy to personalize with a JSON config.
+MorphTerm is a customizable desktop terminal project. It is designed around a simple idea: a terminal that can feel personal, with configurable fonts, colors, backgrounds, shell behavior, panes, and effects.
+
+This project is still in active development. Some features are usable today, while others are experimental and may change.
 
 ## Features
 
-- Electron desktop app with a React renderer.
-- One working terminal session powered by `node-pty`.
-- xterm.js terminal rendering with resize support.
-- Configurable font family and font size.
-- Configurable terminal colors.
-- Custom backgrounds:
-  - solid color
+- Desktop terminal app built with Electron and React.
+- Terminal rendering powered by xterm.js.
+- Shell process management through `node-pty`.
+- Tabs and split panes.
+- Resizable terminal panes.
+- Configurable shell selection.
+- JSON-based config file.
+- Config validation.
+- Customizable font family and font size.
+- Customizable terminal foreground, cursor, and theme colors.
+- Background customization:
+  - color
   - image
   - gradient
-- Simple typing effects, including `spark`.
-- JSON-based user config.
+- Typing effect support:
+  - none
+  - spark
 - Basic appearance settings panel.
 
 ## Tech Stack
@@ -40,39 +48,25 @@ Start the app in development mode:
 npm run dev
 ```
 
-The dev command starts the Vite renderer server and then launches Electron once the renderer is ready.
-
 On Windows, if PowerShell blocks `npm`, use:
 
 ```powershell
 npm.cmd run dev
 ```
 
-## npm Commands
+## Commands
 
 ```powershell
 npm run dev
 ```
 
-Runs the renderer and Electron app together.
-
-```powershell
-npm run dev:renderer
-```
-
-Starts only the Vite renderer server at `127.0.0.1:5173`.
-
-```powershell
-npm run dev:electron
-```
-
-Waits for the renderer, compiles Electron main/preload TypeScript, then launches Electron.
+Starts the Vite renderer server and launches Electron.
 
 ```powershell
 npm run typecheck
 ```
 
-Runs TypeScript checks for Electron and renderer code.
+Runs TypeScript checks.
 
 ```powershell
 npm run build
@@ -80,9 +74,15 @@ npm run build
 
 Builds the Electron main/preload code and the renderer.
 
-## Customization
+```powershell
+npm run dist:win
+```
 
-MorphTerm stores user settings as JSON. During development, Electron runtime cache and app config are kept separate:
+Builds a Windows portable release artifact.
+
+## Configuration
+
+During development, MorphTerm stores config separately from Electron runtime data:
 
 ```text
 .morphterm-dev/user-data/
@@ -110,52 +110,30 @@ Example config:
   },
   "effects": {
     "typingEffect": "spark"
+  },
+  "shell": {
+    "profile": "system",
+    "customPath": "",
+    "customArgs": []
   }
 }
 ```
 
-Supported background types:
+## Current Status
 
-- `color`
-- `image`
-- `gradient`
-
-Supported typing effects:
-
-- `none`
-- `spark`
-
-You can also open and edit the config file from the app settings panel.
+MorphTerm is currently an early alpha. The core terminal experience works, but packaging, signing, cross-platform behavior, and advanced terminal workflows are still being improved.
 
 ## Roadmap
 
-- Better terminal theme presets.
+- Better packaged releases.
+- Code signing for Windows builds.
+- More terminal theme presets.
 - Cursor style customization.
-- Multiple tabs.
-- Split panes.
 - Search in terminal output.
 - More typing effects.
+- Stronger session recovery.
+- More complete keybinding customization UI.
 - Plugin system.
-- Packaged releases for Windows, macOS, and Linux.
-
-## Contributing
-
-Contributions are welcome. Keep changes small, readable, and focused.
-
-Good first areas to explore:
-
-- UI polish.
-- Terminal theme presets.
-- Config validation.
-- Accessibility improvements.
-- Cross-platform shell behavior.
-
-Before opening a pull request, please run:
-
-```powershell
-npm run typecheck
-npm run build
-```
 
 ## License
 
