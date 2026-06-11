@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ConfigManager } from "./ConfigManager";
 import { TerminalManager } from "./TerminalManager";
 import { registerAppMenuIpc } from "./registerAppMenuIpc";
@@ -62,7 +63,7 @@ function createMainWindow(): void {
   );
 
   if (app.isPackaged) {
-    void mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+    void mainWindow.loadFile(path.join(getPackagedRendererDirectory(), "index.html"));
   } else {
     void mainWindow.loadURL(rendererDevUrl);
   }
@@ -81,7 +82,37 @@ function isAllowedRendererUrl(url: string): boolean {
     return url === rendererDevUrl || url.startsWith(`${rendererDevUrl}/`);
   }
 
-  return url.startsWith("file://");
+  let requestedPath: string;
+
+  try {
+    const requestedUrl = new URL(url);
+
+    if (requestedUrl.protocol !== "file:") {
+      return false;
+    }
+
+    requestedPath = fileURLToPath(requestedUrl);
+  } catch {
+    return false;
+  }
+
+  return isPathInsideDirectory(requestedPath, getPackagedRendererDirectory());
+}
+
+function getPackagedRendererDirectory(): string {
+  return path.resolve(__dirname, "../renderer");
+}
+
+function isPathInsideDirectory(filePath: string, directoryPath: string): boolean {
+  const normalizedFilePath = path.resolve(filePath);
+  const normalizedDirectoryPath = path.resolve(directoryPath);
+  const relativePath = path.relative(normalizedDirectoryPath, normalizedFilePath);
+
+  return relativePath === "" || (
+    relativePath.length > 0 &&
+    !relativePath.startsWith("..") &&
+    !path.isAbsolute(relativePath)
+  );
 }
 
 app.on("ready", () => {
