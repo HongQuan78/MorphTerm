@@ -1,81 +1,60 @@
-# MorphTerm - Agent Instructions
+# Repository Guidelines
 
-## Project goal
+## Project Structure & Module Organization
 
-Build an open-source customizable desktop terminal inspired by Hyper.
+MorphTerm is an Electron terminal built with React, TypeScript, xterm.js, and node-pty. Code lives under `src/`:
 
-The app should allow users to customize:
+- `src/main/`: Electron main process, window setup, config loading, and node-pty terminal management.
+- `src/preload/`: preload bridge that exposes safe IPC APIs to the renderer.
+- `src/renderer/`: React UI, terminal rendering, settings panel, effects, and styles.
+- `src/shared/`: shared IPC contracts, config types, defaults, validation, and app metadata.
+- `public/`: packaged assets such as the app icon.
+- `.github/workflows/ci.yml`: Windows CI for install, typecheck, and build.
 
-background image/color/gradient
+Generated output belongs in `dist/` and release artifacts in `release/`; do not hand-edit either directory.
 
-- font family and font size
+## Build, Test, and Development Commands
 
-- terminal color theme
+Use Node 20:
 
-- cursor style
+```powershell
+npm install
+npm run dev
+npm run typecheck
+npm run build
+npm run dist:win
+```
 
-- typing effects
+- `npm run dev`: starts the Vite renderer server and launches Electron.
+- `npm run typecheck`: runs TypeScript checks for Electron and renderer projects.
+- `npm run build`: compiles main/preload code and builds the renderer.
+- `npm run dist:win`: creates a Windows portable package in `release/`.
 
-- config via JSON
+If PowerShell blocks `npm`, use `npm.cmd run <script>`.
 
-- later: tabs, split panes, plugin system
+## Coding Style & Naming Conventions
 
-## Tech stack
+Write TypeScript with small, readable modules. Use two-space indentation, semicolons, and existing React functional component patterns. Name React components in `PascalCase` (`TerminalView.tsx`) and helpers, IPC channels, and config fields in `camelCase`.
 
-Use:
+Keep architecture boundaries strict: never spawn shell processes in the renderer. Terminal process work belongs in `src/main/`, browser-facing APIs in `src/preload/`, and shared contracts in `src/shared/`.
 
-- Electron
+## Testing Guidelines
 
-- React
+There is currently no dedicated test runner. Before submitting changes, run:
 
-- TypeScript
+```powershell
+npm run typecheck
+npm run build
+```
 
-- xterm.js
+For terminal, config, or IPC behavior, manually verify `npm run dev` on Windows. Future tests should colocate with the feature and use names such as `validate-config.test.ts`.
 
-- node-pty
+## Commit & Pull Request Guidelines
 
-- Tailwind CSS if useful
+Recent history uses conventional commit prefixes such as `fix:`, `docs:`, `chore:`, and `ci:`. Keep commits focused and imperative, such as `fix: resize terminal after settings toggle`.
 
-## Architecture rules
+Pull requests should include a summary, verification commands, linked issues when applicable, and screenshots or recordings for visible renderer changes. Note config or packaging impact explicitly.
 
-- Do not run shell processes directly in the renderer.
+## Configuration & Scope Notes
 
-- Use Electron main process to manage node-pty.
-
-- Use preload + IPC for communication between renderer and main.
-
-- Keep terminal engine, config system, theme system, and effect system separated.
-
-- Avoid implementing plugin system in V0.1.
-
-## Development rules
-
-- Make small, reviewable changes.
-
-- Explain what files were changed after each task.
-
-- Prefer simple readable code over clever abstractions.
-
-- Do not add large dependencies without explaining why.
-
-- After each feature, run build/typecheck if available.
-
-## V0.1 scope
-
-Implement only:
-
-- one working terminal session
-
-- xterm.js rendering
-
-- node-pty shell connection
-
-- resize support
-
-- basic config file
-
-- background customization
-
-- font customization
-
-- terminal colors
+Development config is under `.morphterm-dev/`, including `.morphterm-dev/config/config.json`. Keep V0.1 changes focused on one working terminal session, xterm.js rendering, node-pty connection, resize support, JSON config, background/font customization, and terminal colors. Avoid a plugin system or large dependencies without a design note.
