@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu, shell } from "electron";
+import type { MenuItemConstructorOptions } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import { ConfigManager } from "./ConfigManager";
@@ -8,6 +9,7 @@ import { registerTerminalIpc } from "./registerTerminalIpc";
 import { appInfo } from "../shared/appInfo";
 
 const rendererDevUrl = "http://127.0.0.1:5173";
+const projectGitHubUrl = "https://github.com/HongQuan78/MorphTerm";
 let configManager: ConfigManager;
 let terminalManager: TerminalManager;
 let configPath: string | undefined;
@@ -88,6 +90,7 @@ app.on("ready", () => {
   terminalManager = new TerminalManager(() => configManager.get());
   registerConfigIpc(configManager);
   registerTerminalIpc(terminalManager);
+  Menu.setApplicationMenu(createApplicationMenu());
   createMainWindow();
 });
 
@@ -112,4 +115,73 @@ function migrateDevConfig(legacyConfigPath: string, nextConfigPath: string): voi
 
   fs.mkdirSync(path.dirname(nextConfigPath), { recursive: true });
   fs.copyFileSync(legacyConfigPath, nextConfigPath);
+}
+
+function createApplicationMenu(): Menu {
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: "File",
+      submenu: [{ role: "quit" }]
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" }
+      ]
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" }
+      ]
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "close" }]
+    },
+    {
+      role: "help",
+      submenu: [
+        {
+          label: "MorphTerm GitHub",
+          click: () => {
+            void shell.openExternal(projectGitHubUrl);
+          }
+        }
+      ]
+    }
+  ];
+
+  if (process.platform === "darwin") {
+    template.unshift({
+      label: appInfo.name,
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" }
+      ]
+    });
+  }
+
+  return Menu.buildFromTemplate(template);
 }
