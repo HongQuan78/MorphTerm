@@ -9,6 +9,7 @@
     "dev:electron": "wait-on http://127.0.0.1:5173 && tsc -p tsconfig.electron.json && electron .",
     "build": "tsc -p tsconfig.electron.json && vite build",
     "dist:win": "npm run build && electron-builder --win portable",
+    "test": "tsc -p tsconfig.test.json && node --test \"dist-test/tests/**/*.test.js\"",
     "typecheck": "tsc --noEmit -p tsconfig.electron.json && tsc --noEmit -p tsconfig.renderer.json"
   },
   "keywords": [
