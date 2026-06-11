@@ -643,7 +643,7 @@ const TerminalPane = memo(function TerminalPane({
         data
       });
 
-      if (isPrintableInput(data)) {
+      if (shouldTriggerTypingEffect(data)) {
         requestAnimationFrame(() => {
           effectLayerRef.current?.triggerTypingEffect(
             getCursorEffectOrigin(terminalContainer, terminal)
@@ -902,12 +902,24 @@ function isSettingsFormControl(target: EventTarget | null): boolean {
   );
 }
 
+function shouldTriggerTypingEffect(data: string): boolean {
+  return isDeleteInput(data) || isPrintableInput(data);
+}
+
 function isPrintableInput(data: string): boolean {
+  if (data.startsWith("\x1b")) {
+    return false;
+  }
+
   return Array.from(data).some((character) => {
     const codePoint = character.codePointAt(0);
 
     return codePoint !== undefined && codePoint >= 0x20 && codePoint !== 0x7f;
   });
+}
+
+function isDeleteInput(data: string): boolean {
+  return data === "\b" || data === "\x7f" || /^\x1b\[3(?:;\d+)?~$/.test(data);
 }
 
 function getCursorEffectOrigin(
