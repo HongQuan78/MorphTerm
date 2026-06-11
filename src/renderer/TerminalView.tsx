@@ -1,4 +1,12 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
@@ -63,6 +71,12 @@ export function TerminalView() {
   const activeTab = useMemo(() => {
     return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
   }, [activeTabId, tabs]);
+  const activePanes = useMemo(() => {
+    return activeTab ? normalizePaneSizes(activeTab.panes) : [];
+  }, [activeTab]);
+  const closeSettings = useCallback(() => {
+    setIsSettingsOpen(false);
+  }, []);
 
   useEffect(() => {
     const storedLayout = loadStoredTerminalLayout();
@@ -503,7 +517,7 @@ export function TerminalView() {
             ref={panesContainerRef}
             className={`terminal-panes ${activeTab.splitDirection}`}
           >
-            {normalizePaneSizes(activeTab.panes).map((pane, paneIndex, panes) => (
+            {activePanes.map((pane, paneIndex, panes) => (
               <Fragment key={pane.id}>
                 <TerminalPane
                   pane={pane}
@@ -538,7 +552,7 @@ export function TerminalView() {
         previewConfig={previewConfig}
         savedConfig={savedConfig}
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={closeSettings}
         onPreviewConfigChange={setPreviewConfig}
         onSavedConfigChange={setSavedConfig}
       />
@@ -546,7 +560,7 @@ export function TerminalView() {
   );
 }
 
-function TerminalPane({
+const TerminalPane = memo(function TerminalPane({
   pane,
   config,
   isActive,
@@ -579,7 +593,7 @@ function TerminalPane({
     requestAnimationFrame(() => {
       resizeTerminal(terminal, fitAddonRef.current, sessionIdRef.current);
     });
-  }, [config]);
+  }, [config.fontFamily, config.fontSize, config.terminalTheme]);
 
   useEffect(() => {
     const terminalContainer = containerRef.current;
@@ -718,6 +732,32 @@ function TerminalPane({
       </div>
       <div ref={containerRef} className="terminal-view" />
     </div>
+  );
+}, terminalPanePropsAreEqual);
+
+function terminalPanePropsAreEqual(
+  previous: TerminalPaneProps,
+  next: TerminalPaneProps
+): boolean {
+  return (
+    previous.pane.id === next.pane.id &&
+    previous.pane.title === next.pane.title &&
+    previous.pane.sessionId === next.pane.sessionId &&
+    previous.pane.size === next.pane.size &&
+    terminalOptionsAreEqual(previous.config, next.config) &&
+    previous.isActive === next.isActive &&
+    previous.effectLayerRef === next.effectLayerRef
+  );
+}
+
+function terminalOptionsAreEqual(
+  previousConfig: MorphTermConfig,
+  nextConfig: MorphTermConfig
+): boolean {
+  return (
+    previousConfig.fontFamily === nextConfig.fontFamily &&
+    previousConfig.fontSize === nextConfig.fontSize &&
+    previousConfig.terminalTheme === nextConfig.terminalTheme
   );
 }
 

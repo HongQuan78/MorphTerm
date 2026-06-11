@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
@@ -70,7 +70,7 @@ const keybindingLabels: Array<{
   { action: "toggleSettings", label: "Toggle settings" }
 ];
 
-export function SettingsPanel({
+export const SettingsPanel = memo(function SettingsPanel({
   previewConfig,
   savedConfig,
   isOpen,
@@ -559,7 +559,7 @@ export function SettingsPanel({
       </footer>
     </aside>
   );
-}
+});
 
 function createGradientValue(gradient: GradientDraft): string {
   return `linear-gradient(${gradient.angle}deg, ${gradient.from} 0%, ${gradient.to} 100%)`;
