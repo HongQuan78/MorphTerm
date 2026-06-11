@@ -812,17 +812,19 @@ select {
   position: absolute;
   right: 16px;
   top: 16px;
+  bottom: 16px;
   z-index: 4;
-  width: min(420px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
-  overflow: auto;
-  border: 1px solid rgba(236, 239, 244, 0.18);
-  border-radius: 10px;
-  padding: 18px;
-  contain: layout paint;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(400px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 8px;
+  padding: 0;
+  contain: layout;
   color: #eceff4;
-  background: #0d1014;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.36);
+  background: #101419;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
 }
 
 .settings-header {
@@ -830,18 +832,27 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.1);
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.settings-body {
+  min-height: 0;
+  overflow: auto;
 }
 
 .settings-header h2 {
   margin: 0;
-  font-size: 1.12rem;
+  color: #f8fafc;
+  font-size: 1.05rem;
+  line-height: 1.2;
 }
 
 .settings-eyebrow {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   color: #8fbcbb;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -849,23 +860,24 @@ select {
 
 .settings-section {
   display: grid;
-  gap: 12px;
-  padding: 14px 0;
-  border-top: 1px solid rgba(236, 239, 244, 0.1);
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.08);
 }
 
 .settings-section h3 {
   margin: 0;
   color: #f8fafc;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
+  line-height: 1.2;
 }
 
 .settings-panel label {
   display: grid;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: #cbd5e1;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .setting-label-row {
@@ -884,18 +896,26 @@ select {
 .settings-color-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-panel input,
 .settings-panel select,
 .settings-panel button {
   min-height: 32px;
-  border: 1px solid rgba(236, 239, 244, 0.16);
+  border: 1px solid rgba(226, 232, 240, 0.13);
   border-radius: 6px;
   padding: 6px 8px;
   color: #eceff4;
-  background: rgba(30, 34, 40, 0.96);
+  background: rgba(15, 23, 42, 0.64);
+}
+
+.settings-panel input:focus,
+.settings-panel select:focus,
+.settings-panel button:focus-visible {
+  border-color: rgba(143, 188, 187, 0.48);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(143, 188, 187, 0.14);
 }
 
 .settings-panel input[type="color"] {
@@ -912,7 +932,7 @@ select {
 
 .ghost-button {
   color: #dbeafe;
-  background: rgba(30, 41, 59, 0.88);
+  background: rgba(30, 41, 59, 0.7);
 }
 
 .primary-button {
@@ -931,9 +951,9 @@ select {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   padding: 4px;
-  border: 1px solid rgba(236, 239, 244, 0.12);
+  border: 1px solid rgba(226, 232, 240, 0.1);
   border-radius: 8px;
-  background: rgba(2, 6, 23, 0.46);
+  background: rgba(2, 6, 23, 0.28);
 }
 
 .segmented-control button {
@@ -946,11 +966,22 @@ select {
   background: rgba(136, 192, 208, 0.18);
 }
 
-.browse-row {
+.image-picker {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
+  gap: 8px;
+}
+
+.image-path-display {
+  min-height: 34px;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.1);
+  border-radius: 6px;
+  padding: 8px 9px;
+  color: #94a3b8;
+  background: rgba(2, 6, 23, 0.28);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gradient-editor {
@@ -959,9 +990,9 @@ select {
 }
 
 .gradient-preview {
-  height: 44px;
-  border: 1px solid rgba(236, 239, 244, 0.14);
-  border-radius: 8px;
+  height: 40px;
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 6px;
 }
 
 .preset-row {
@@ -971,24 +1002,27 @@ select {
 }
 
 .settings-footer {
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(236, 239, 244, 0.1);
+  padding: clamp(10px, 2vh, 14px) 16px;
+  border-top: 1px solid rgba(226, 232, 240, 0.1);
+  background: #101419;
 }
 
 .settings-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .settings-status {
   color: #a7f3d0;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .settings-note {
@@ -1008,11 +1042,11 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid rgba(236, 239, 244, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.08);
   border-radius: 6px;
   padding: 8px 10px;
   color: #cbd5e1;
-  background: rgba(15, 23, 42, 0.26);
+  background: rgba(15, 23, 42, 0.22);
   font-size: 0.82rem;
 }
 
@@ -1053,17 +1087,17 @@ select {
 }
 
 .terminal-view .xterm-viewport::-webkit-scrollbar,
-.settings-panel::-webkit-scrollbar {
+.settings-body::-webkit-scrollbar {
   width: 10px;
 }
 
 .terminal-view .xterm-viewport::-webkit-scrollbar-track,
-.settings-panel::-webkit-scrollbar-track {
+.settings-body::-webkit-scrollbar-track {
   background: var(--morph-scrollbar-track);
 }
 
 .terminal-view .xterm-viewport::-webkit-scrollbar-thumb,
-.settings-panel::-webkit-scrollbar-thumb {
+.settings-body::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
   background: var(--morph-scrollbar-thumb);
@@ -1071,7 +1105,7 @@ select {
 }
 
 .terminal-view .xterm-viewport::-webkit-scrollbar-thumb:hover,
-.settings-panel::-webkit-scrollbar-thumb:hover {
+.settings-body::-webkit-scrollbar-thumb:hover {
   background: var(--morph-scrollbar-thumb-hover);
   background-clip: padding-box;
 }
@@ -1131,6 +1165,30 @@ select {
   .settings-panel {
     inset: 12px;
     width: auto;
-    max-height: calc(100vh - 24px);
+  }
+}
+
+@media (max-height: 560px) {
+  .settings-header,
+  .settings-section {
+    padding: 10px 12px;
+  }
+
+  .settings-footer {
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .settings-footer > .ghost-button {
+    flex: 1 1 auto;
+  }
+
+  .settings-actions {
+    flex: 1 1 auto;
+  }
+
+  .settings-actions button {
+    flex: 1 1 72px;
   }
 }

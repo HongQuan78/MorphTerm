@@ -199,80 +199,81 @@ export const SettingsPanel = memo(function SettingsPanel({
       <header className="settings-header">
         <div>
           <p className="settings-eyebrow">MorphTerm</p>
-          <h2>Appearance</h2>
+          <h2>Settings</h2>
         </div>
         <button type="button" className="ghost-button" onClick={onClose}>
           Close
         </button>
       </header>
 
-      <section className="settings-section">
-        <h3>Typography</h3>
-        <label>
-          Font family
-          <input
-            value={draft.fontFamily}
-            onChange={(event) =>
-              updateDraft({ ...draft, fontFamily: event.target.value })
-            }
-          />
-        </label>
-
-        <label>
-          <span className="setting-label-row">
-            <span>Font size</span>
-            <span className="setting-value">{draft.fontSize}px</span>
-          </span>
-          <input
-            type="number"
-            min="10"
-            max="32"
-            value={draft.fontSize}
-            onChange={(event) =>
-              updateDraft({ ...draft, fontSize: Number(event.target.value) })
-            }
-          />
-        </label>
-      </section>
-
-      <section className="settings-section">
-        <h3>Terminal Colors</h3>
-        <div className="settings-color-grid">
+      <div className="settings-body">
+        <section className="settings-section">
+          <h3>Typography</h3>
           <label>
-            Foreground
+            Font family
             <input
-              type="color"
-              value={String(draft.terminalTheme.foreground ?? "#d8dee9")}
+              value={draft.fontFamily}
               onChange={(event) =>
-                updateDraft({
-                  ...draft,
-                  terminalTheme: {
-                    ...draft.terminalTheme,
-                    foreground: event.target.value
-                  }
-                })
+                updateDraft({ ...draft, fontFamily: event.target.value })
               }
             />
           </label>
 
           <label>
-            Cursor
+            <span className="setting-label-row">
+              <span>Font size</span>
+              <span className="setting-value">{draft.fontSize}px</span>
+            </span>
             <input
-              type="color"
-              value={String(draft.terminalTheme.cursor ?? "#88c0d0")}
+              type="number"
+              min="10"
+              max="32"
+              value={draft.fontSize}
               onChange={(event) =>
-                updateDraft({
-                  ...draft,
-                  terminalTheme: {
-                    ...draft.terminalTheme,
-                    cursor: event.target.value
-                  }
-                })
+                updateDraft({ ...draft, fontSize: Number(event.target.value) })
               }
             />
           </label>
-        </div>
-      </section>
+        </section>
+
+        <section className="settings-section">
+          <h3>Terminal Colors</h3>
+          <div className="settings-color-grid">
+            <label>
+              Foreground
+              <input
+                type="color"
+                value={String(draft.terminalTheme.foreground ?? "#d8dee9")}
+                onChange={(event) =>
+                  updateDraft({
+                    ...draft,
+                    terminalTheme: {
+                      ...draft.terminalTheme,
+                      foreground: event.target.value
+                    }
+                  })
+                }
+              />
+            </label>
+
+            <label>
+              Cursor
+              <input
+                type="color"
+                value={String(draft.terminalTheme.cursor ?? "#88c0d0")}
+                onChange={(event) =>
+                  updateDraft({
+                    ...draft,
+                    terminalTheme: {
+                      ...draft.terminalTheme,
+                      cursor: event.target.value
+                    }
+                  })
+                }
+              />
+            </label>
+          </div>
+        </section>
 
       <section className="settings-section">
         <h3>Shell</h3>
@@ -375,20 +376,16 @@ export const SettingsPanel = memo(function SettingsPanel({
         )}
 
         {draft.appearance.background.type === "image" && (
-          <div className="browse-row">
-            <label>
-              Image path
-              <input
-                value={draft.appearance.background.value}
-                placeholder="No image selected"
-                onChange={(event) =>
-                  updateBackground({ type: "image", value: event.target.value })
-                }
-              />
-            </label>
-            <button type="button" onClick={() => void browseImage()}>
-              Browse
-            </button>
+          <div className="image-picker">
+            <span className="setting-label-row">
+              <span>Image path</span>
+              <button type="button" onClick={() => void browseImage()}>
+                Browse
+              </button>
+            </span>
+            <div className="image-path-display" title={draft.appearance.background.value}>
+              {draft.appearance.background.value || "No image selected"}
+            </div>
           </div>
         )}
 
@@ -528,6 +525,7 @@ export const SettingsPanel = memo(function SettingsPanel({
           Edit keybindings in config JSON for now, then save or restart MorphTerm.
         </p>
       </section>
+      </div>
 
       <footer className="settings-footer">
         <button

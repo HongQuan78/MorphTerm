@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "electron-dev": {
+      "source": "jamditis/claude-skills-journalism",
+      "sourceType": "github",
+      "skillPath": "dev-toolkit/skills/electron-dev/SKILL.md",
+      "computedHash": "21b73bc20015c4aa105512ced3d1dad6409105193c5e610e9f618fc13eff8f2a"
+    }
+  }
+}
