@@ -1,8 +1,4 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { appInfo } from "../shared/appInfo";
-import { appMenuChannels } from "../shared/appMenuIpc";
-import { configChannels } from "../shared/config/config-ipc";
-import { terminalChannels } from "../shared/terminalIpc";
 import type { AppMenuAction } from "../shared/appMenuIpc";
 import type {
   MorphTermConfig,
@@ -20,9 +16,41 @@ import type {
   TerminalWriteRequest
 } from "../shared/terminalIpc";
 
+const appInfo = {
+  name: "MorphTerm",
+  version: "0.1.0"
+} as const;
+
+const appMenuChannels = {
+  performAction: "app-menu:perform-action"
+} as const;
+
+const configChannels = {
+  get: "config:get",
+  update: "config:update",
+  openConfigFile: "config:openConfigFile",
+  selectBackgroundImage: "config:selectBackgroundImage",
+  getBackgroundImageData: "config:getBackgroundImageData"
+} as const;
+
+const terminalChannels = {
+  create: "terminal:create",
+  attach: "terminal:attach",
+  write: "terminal:write",
+  resize: "terminal:resize",
+  dispose: "terminal:dispose",
+  data: "terminal:data",
+  exit: "terminal:exit"
+} as const;
+
+const platform =
+  typeof process === "object" && typeof process.platform === "string"
+    ? process.platform
+    : "win32";
+
 const morphTermApi = {
   appInfo,
-  platform: process.platform,
+  platform,
   appMenu: {
     performAction(action: AppMenuAction): Promise<void> {
       return ipcRenderer.invoke(appMenuChannels.performAction, action);
