@@ -123,31 +123,39 @@ export class TerminalManager {
     };
   }
 
-  write(id: string, data: string): void {
-    const session = this.getSession(id);
+  write(webContents: WebContents, id: string, data: string): void {
+    const session = this.getOwnedSession(webContents, id);
     session.process.write(data);
   }
 
-  resize(id: string, cols: number, rows: number): void {
-    const session = this.getSession(id);
+  resize(webContents: WebContents, id: string, cols: number, rows: number): void {
+    const session = this.getOwnedSession(webContents, id);
     session.process.resize(normalizeDimension(cols), normalizeDimension(rows));
   }
 
-  dispose(id: string): void {
-    this.removeSession(id, true);
+  dispose(webContents: WebContents, id: string): void {
+    this.removeSession(id, true, webContents);
   }
 
   disposeAll(): void {
     for (const id of this.sessions.keys()) {
-      this.dispose(id);
+      this.removeSession(id, true);
     }
   }
 
-  private removeSession(id: string, killProcess: boolean): void {
+  private removeSession(
+    id: string,
+    killProcess: boolean,
+    webContents?: WebContents
+  ): void {
     const session = this.sessions.get(id);
 
     if (!session) {
       return;
+    }
+
+    if (webContents && session.webContents.id !== webContents.id) {
+      throw new Error(`Terminal session not owned by caller: ${id}`);
     }
 
     session.dataSubscription.dispose();
@@ -163,6 +171,16 @@ export class TerminalManager {
 
     if (!session) {
       throw new Error(`Terminal session not found: ${id}`);
+    }
+
+    return session;
+  }
+
+  private getOwnedSession(webContents: WebContents, id: string): TerminalSession {
+    const session = this.getSession(id);
+
+    if (session.webContents.id !== webContents.id) {
+      throw new Error(`Terminal session not owned by caller: ${id}`);
     }
 
     return session;

@@ -39,9 +39,23 @@ function createMainWindow(): void {
       preload: path.join(__dirname, "../preload/preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      webSecurity: true,
+      allowRunningInsecureContent: false
     }
   });
+
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (!isAllowedRendererUrl(url)) {
+      event.preventDefault();
+    }
+  });
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (_webContents, _permission, callback) => {
+      callback(false);
+    }
+  );
 
   if (app.isPackaged) {
     void mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
@@ -56,6 +70,14 @@ function getAppIconPath(): string {
   }
 
   return path.join(process.cwd(), "public", "app-icon.png");
+}
+
+function isAllowedRendererUrl(url: string): boolean {
+  if (!app.isPackaged) {
+    return url === rendererDevUrl || url.startsWith(`${rendererDevUrl}/`);
+  }
+
+  return url.startsWith("file://");
 }
 
 app.on("ready", () => {

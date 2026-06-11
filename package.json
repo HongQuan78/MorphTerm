@@ -26,6 +26,7 @@
       "dist/**/*",
       "package.json"
     ],
+    "asar": true,
     "directories": {
       "output": "release"
     },

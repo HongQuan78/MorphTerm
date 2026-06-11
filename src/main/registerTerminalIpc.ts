@@ -8,37 +8,61 @@ import type {
   TerminalResizeRequest,
   TerminalWriteRequest
 } from "../shared/terminalIpc";
+import {
+  asTerminalAttachRequest,
+  asTerminalCreateRequest,
+  asTerminalDisposeRequest,
+  asTerminalResizeRequest,
+  asTerminalWriteRequest,
+  assertTrustedIpcSender
+} from "./ipcValidation";
 
 export function registerTerminalIpc(terminalManager: TerminalManager): void {
   ipcMain.handle(
     terminalChannels.create,
     (event, request?: TerminalCreateRequest) => {
-      return terminalManager.create(event.sender, request);
+      assertTrustedIpcSender(event);
+
+      return terminalManager.create(event.sender, asTerminalCreateRequest(request));
     }
   );
 
   ipcMain.handle(
     terminalChannels.attach,
     (event, request: TerminalAttachRequest) => {
-      return terminalManager.attach(event.sender, request);
+      assertTrustedIpcSender(event);
+
+      return terminalManager.attach(event.sender, asTerminalAttachRequest(request));
     }
   );
 
-  ipcMain.handle(terminalChannels.write, (_event, request: TerminalWriteRequest) => {
-    terminalManager.write(request.id, request.data);
+  ipcMain.handle(terminalChannels.write, (event, request: TerminalWriteRequest) => {
+    assertTrustedIpcSender(event);
+    const writeRequest = asTerminalWriteRequest(request);
+
+    terminalManager.write(event.sender, writeRequest.id, writeRequest.data);
   });
 
   ipcMain.handle(
     terminalChannels.resize,
-    (_event, request: TerminalResizeRequest) => {
-      terminalManager.resize(request.id, request.cols, request.rows);
+    (event, request: TerminalResizeRequest) => {
+      assertTrustedIpcSender(event);
+      const resizeRequest = asTerminalResizeRequest(request);
+
+      terminalManager.resize(
+        event.sender,
+        resizeRequest.id,
+        resizeRequest.cols,
+        resizeRequest.rows
+      );
     }
   );
 
   ipcMain.handle(
     terminalChannels.dispose,
-    (_event, request: TerminalDisposeRequest) => {
-      terminalManager.dispose(request.id);
+    (event, request: TerminalDisposeRequest) => {
+      assertTrustedIpcSender(event);
+      terminalManager.dispose(event.sender, asTerminalDisposeRequest(request).id);
     }
   );
 }
