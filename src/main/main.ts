@@ -1,9 +1,9 @@
-import { app, BrowserWindow, Menu, shell } from "electron";
-import type { MenuItemConstructorOptions } from "electron";
+import { app, BrowserWindow } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import { ConfigManager } from "./ConfigManager";
 import { TerminalManager } from "./TerminalManager";
+import { registerAppMenuIpc } from "./registerAppMenuIpc";
 import { registerConfigIpc } from "./registerConfigIpc";
 import { registerTerminalIpc } from "./registerTerminalIpc";
 import { appInfo } from "../shared/appInfo";
@@ -36,6 +36,7 @@ function createMainWindow(): void {
     minHeight: 520,
     title: appInfo.name,
     icon: getAppIconPath(),
+    autoHideMenuBar: true,
     backgroundColor: "#101214",
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.js"),
@@ -47,6 +48,7 @@ function createMainWindow(): void {
     }
   });
 
+  mainWindow.setMenuBarVisibility(false);
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (!isAllowedRendererUrl(url)) {
@@ -88,9 +90,10 @@ app.on("ready", () => {
   );
   configManager.load();
   terminalManager = new TerminalManager(() => configManager.get());
+  registerAppMenuIpc(projectGitHubUrl);
   registerConfigIpc(configManager);
   registerTerminalIpc(terminalManager);
-  Menu.setApplicationMenu(createApplicationMenu());
+  app.applicationMenu = null;
   createMainWindow();
 });
 
@@ -115,73 +118,4 @@ function migrateDevConfig(legacyConfigPath: string, nextConfigPath: string): voi
 
   fs.mkdirSync(path.dirname(nextConfigPath), { recursive: true });
   fs.copyFileSync(legacyConfigPath, nextConfigPath);
-}
-
-function createApplicationMenu(): Menu {
-  const template: MenuItemConstructorOptions[] = [
-    {
-      label: "File",
-      submenu: [{ role: "quit" }]
-    },
-    {
-      label: "Edit",
-      submenu: [
-        { role: "undo" },
-        { role: "redo" },
-        { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
-        { role: "selectAll" }
-      ]
-    },
-    {
-      label: "View",
-      submenu: [
-        { role: "reload" },
-        { role: "forceReload" },
-        { role: "toggleDevTools" },
-        { type: "separator" },
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { type: "separator" },
-        { role: "togglefullscreen" }
-      ]
-    },
-    {
-      label: "Window",
-      submenu: [{ role: "minimize" }, { role: "close" }]
-    },
-    {
-      role: "help",
-      submenu: [
-        {
-          label: "MorphTerm GitHub",
-          click: () => {
-            void shell.openExternal(projectGitHubUrl);
-          }
-        }
-      ]
-    }
-  ];
-
-  if (process.platform === "darwin") {
-    template.unshift({
-      label: appInfo.name,
-      submenu: [
-        { role: "about" },
-        { type: "separator" },
-        { role: "services" },
-        { type: "separator" },
-        { role: "hide" },
-        { role: "hideOthers" },
-        { role: "unhide" },
-        { type: "separator" },
-        { role: "quit" }
-      ]
-    });
-  }
-
-  return Menu.buildFromTemplate(template);
 }

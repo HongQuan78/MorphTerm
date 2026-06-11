@@ -29,15 +29,272 @@ select {
 }
 
 .app-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 0;
+  overflow: visible;
   background: #0f1115;
+}
+
+.app-menu-bar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.12);
+  color: #dbe4ef;
+  background:
+    linear-gradient(180deg, rgba(21, 29, 40, 0.98), rgba(8, 11, 16, 0.98)),
+    #0f1115;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 24px rgba(0, 0, 0, 0.26);
+  user-select: none;
+}
+
+.app-menu-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-right: 4px;
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.app-menu-mark {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(143, 188, 187, 0.72);
+  border-radius: 5px;
+  background:
+    linear-gradient(135deg, rgba(143, 188, 187, 0.9), rgba(136, 192, 208, 0.18)),
+    rgba(15, 23, 42, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 16px rgba(143, 188, 187, 0.24);
+}
+
+.app-menu-mark::after {
+  position: absolute;
+  inset: 4px;
+  border-radius: 2px;
+  background: rgba(15, 23, 42, 0.72);
+  content: "";
+}
+
+.app-menu-brand-name {
+  overflow: hidden;
+  max-width: 120px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-menu-surface {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid rgba(226, 232, 240, 0.1);
+  border-radius: 8px;
+  padding: 2px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.64), rgba(2, 6, 23, 0.34)),
+    rgba(2, 6, 23, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.app-menu-list {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: visible;
+  scrollbar-width: none;
+}
+
+.app-menu-list::-webkit-scrollbar {
+  display: none;
+}
+
+.app-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.app-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 27px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 9px;
+  color: #cbd5e1;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.app-menu-trigger:hover,
+.app-menu-trigger.active {
+  border-color: rgba(143, 188, 187, 0.24);
+  color: #f8fafc;
+  background:
+    linear-gradient(180deg, rgba(143, 188, 187, 0.18), rgba(143, 188, 187, 0.08)),
+    rgba(15, 23, 42, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 10px rgba(0, 0, 0, 0.16);
+}
+
+.app-menu-trigger:focus-visible {
+  border-color: rgba(143, 188, 187, 0.58);
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(15, 23, 42, 0.86),
+    0 0 0 4px rgba(143, 188, 187, 0.3);
+}
+
+.app-menu-chevron {
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  opacity: 0.58;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.app-menu-trigger.active .app-menu-chevron {
+  opacity: 0.9;
+  transform: translateY(1px) rotate(225deg);
+}
+
+.app-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 10;
+  display: grid;
+  gap: 3px;
+  min-width: 250px;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 8px;
+  padding: 7px;
+  background:
+    linear-gradient(180deg, rgba(20, 29, 41, 0.99), rgba(6, 9, 14, 0.99)),
+    #0f1115;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 18px 42px rgba(0, 0, 0, 0.48);
+}
+
+.app-menu:last-child .app-menu-dropdown {
+  right: 0;
+  left: auto;
+}
+
+.app-menu-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 32px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #dbe4ef;
+  background: transparent;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.app-menu-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-menu-item:hover,
+.app-menu-item:focus-visible {
+  border-color: rgba(143, 188, 187, 0.22);
+  color: #f8fafc;
+  background:
+    linear-gradient(90deg, rgba(143, 188, 187, 0.16), rgba(136, 192, 208, 0.06)),
+    rgba(15, 23, 42, 0.36);
+  outline: none;
+}
+
+.app-menu-item.danger:hover,
+.app-menu-item.danger:focus-visible {
+  border-color: rgba(248, 113, 113, 0.24);
+  background: rgba(248, 113, 113, 0.14);
+}
+
+.app-menu-item kbd {
+  min-width: 52px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 5px;
+  padding: 2px 5px;
+  color: #b7c3d1;
+  background: rgba(2, 6, 23, 0.34);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.app-menu-separator {
+  display: block;
+  height: 1px;
+  margin: 5px 4px;
+  background: rgba(226, 232, 240, 0.1);
+}
+
+.app-menu-version {
+  flex: 0 0 auto;
+  border: 1px solid rgba(143, 188, 187, 0.16);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #9fb5c8;
+  background: rgba(15, 23, 42, 0.38);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .terminal-layout {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: #0f1115;
 }
@@ -82,55 +339,104 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   border: 1px solid rgba(226, 232, 240, 0.1);
-  border-radius: 7px;
-  padding: 3px;
-  background: rgba(9, 12, 17, 0.76);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  padding: 5px;
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.88), rgba(7, 10, 15, 0.82)),
+    rgba(9, 12, 17, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 26px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(16px);
 }
 
 .terminal-tabs {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  flex: 1 1 auto;
   min-width: 0;
+  padding: 1px;
   overflow: auto hidden;
+  scrollbar-width: none;
+}
+
+.terminal-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .terminal-tab,
 .terminal-toolbar button {
-  min-height: 26px;
+  min-height: 30px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: 6px;
   color: #cbd5e1;
   background: transparent;
   cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
 }
 
 .terminal-tab {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
-  max-width: 160px;
-  padding: 3px 7px;
+  max-width: 190px;
+  padding: 4px 9px;
   font-size: 0.78rem;
+  outline: none;
 }
 
 .terminal-tab.active {
-  border-color: rgba(143, 188, 187, 0.18);
+  border-color: rgba(143, 188, 187, 0.28);
   color: #f8fafc;
-  background: rgba(143, 188, 187, 0.1);
-  box-shadow: inset 0 -1px 0 rgba(143, 188, 187, 0.74);
+  background:
+    linear-gradient(180deg, rgba(143, 188, 187, 0.18), rgba(143, 188, 187, 0.08)),
+    rgba(15, 23, 42, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 0 rgba(143, 188, 187, 0.82),
+    0 8px 18px rgba(0, 0, 0, 0.18);
 }
 
 .terminal-tab:hover,
 .terminal-toolbar button:hover {
   color: #f8fafc;
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(148, 163, 184, 0.13);
+  transform: translateY(-1px);
+}
+
+.terminal-tab:focus-visible,
+.terminal-toolbar button:focus-visible {
+  border-color: rgba(143, 188, 187, 0.58);
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(15, 23, 42, 0.86),
+    0 0 0 4px rgba(143, 188, 187, 0.34);
+}
+
+.terminal-tab::after {
+  position: absolute;
+  right: 8px;
+  bottom: 3px;
+  left: 8px;
+  height: 1px;
+  border-radius: 999px;
+  background: rgba(143, 188, 187, 0);
+  content: "";
+}
+
+.terminal-tab.active::after {
+  background: rgba(183, 236, 234, 0.36);
 }
 
 .terminal-tab-index {
@@ -145,6 +451,7 @@ select {
 }
 
 .terminal-tab-label {
+  min-width: 0;
   overflow: hidden;
   color: inherit;
   font-weight: 600;
@@ -210,16 +517,29 @@ select {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 3px;
+  gap: 4px;
   flex: 0 0 auto;
+  min-width: max-content;
+  border: 1px solid rgba(226, 232, 240, 0.08);
+  border-radius: 7px;
+  padding: 2px;
+  background: rgba(2, 6, 23, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .terminal-toolbar button {
   display: grid;
   place-items: center;
-  min-width: 28px;
-  padding: 0 7px;
+  width: 30px;
+  min-width: 30px;
+  padding: 0;
   font-weight: 700;
+  outline: none;
+}
+
+.terminal-toolbar button:active,
+.terminal-tab:active {
+  transform: translateY(0);
 }
 
 .terminal-action-icon {
@@ -321,6 +641,11 @@ select {
 .terminal-toolbar button:disabled {
   opacity: 0.44;
   cursor: not-allowed;
+}
+
+.terminal-toolbar button:disabled:hover {
+  background: transparent;
+  transform: none;
 }
 
 .terminal-panes {
@@ -752,6 +1077,52 @@ select {
 }
 
 @media (max-width: 760px) {
+  .app-menu-bar {
+    gap: 8px;
+    padding: 5px 8px;
+  }
+
+  .app-menu-brand-name,
+  .app-menu-version {
+    display: none;
+  }
+
+  .app-menu-surface {
+    overflow: hidden;
+  }
+
+  .app-menu-list {
+    overflow: auto hidden;
+  }
+
+  .app-menu-dropdown {
+    min-width: min(250px, calc(100vw - 24px));
+  }
+
+  .terminal-content {
+    padding: 8px;
+  }
+
+  .terminal-tabbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .terminal-tabs {
+    width: 100%;
+  }
+
+  .terminal-tab {
+    max-width: min(180px, 62vw);
+  }
+
+  .terminal-toolbar {
+    justify-content: flex-start;
+    width: 100%;
+    overflow: auto hidden;
+  }
+
   .settings-toggle {
     right: 16px;
     bottom: 16px;

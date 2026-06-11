@@ -1,7 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { appInfo } from "../shared/appInfo";
+import { appMenuChannels } from "../shared/appMenuIpc";
 import { configChannels } from "../shared/config/config-ipc";
 import { terminalChannels } from "../shared/terminalIpc";
+import type { AppMenuAction } from "../shared/appMenuIpc";
 import type {
   MorphTermConfig,
   MorphTermConfigUpdate
@@ -21,6 +23,11 @@ import type {
 const morphTermApi = {
   appInfo,
   platform: process.platform,
+  appMenu: {
+    performAction(action: AppMenuAction): Promise<void> {
+      return ipcRenderer.invoke(appMenuChannels.performAction, action);
+    }
+  },
   config: {
     get(): Promise<MorphTermConfig> {
       return ipcRenderer.invoke(configChannels.get);
