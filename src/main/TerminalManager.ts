@@ -105,7 +105,7 @@ export class TerminalManager {
     webContents: WebContents,
     options: TerminalAttachRequest
   ): TerminalAttachResult {
-    const session = this.getSession(options.id);
+    const session = this.getAttachableSession(webContents, options.id);
     session.webContents = webContents;
 
     if (options.cols && options.rows) {
@@ -181,6 +181,22 @@ export class TerminalManager {
 
     if (session.webContents.id !== webContents.id) {
       throw new Error(`Terminal session not owned by caller: ${id}`);
+    }
+
+    return session;
+  }
+
+  private getAttachableSession(
+    webContents: WebContents,
+    id: string
+  ): TerminalSession {
+    const session = this.getSession(id);
+
+    if (
+      session.webContents.id !== webContents.id &&
+      !session.webContents.isDestroyed()
+    ) {
+      throw new Error(`Terminal session not attachable by caller: ${id}`);
     }
 
     return session;
