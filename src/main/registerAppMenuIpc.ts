@@ -1,9 +1,12 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { assertTrustedIpcSender } from "./ipcValidation";
 import { appMenuChannels, isAppMenuAction } from "../shared/appMenuIpc";
 import type { AppMenuAction } from "../shared/appMenuIpc";
 
 export function registerAppMenuIpc(projectGitHubUrl: string): void {
-  ipcMain.handle(appMenuChannels.performAction, async (_event, action) => {
+  ipcMain.handle(appMenuChannels.performAction, async (event, action) => {
+    assertTrustedIpcSender(event);
+
     if (!isAppMenuAction(action)) {
       throw new Error("Invalid app menu action");
     }
