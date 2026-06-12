@@ -41,15 +41,15 @@ const menus: MenuDefinition[] = [
   {
     label: "View",
     items: [
-      { label: "Reload", action: "reload", accelerator: "Ctrl+R" },
-      { label: "Force Reload", action: "forceReload", accelerator: "Ctrl+Shift+R" },
-      { label: "Toggle DevTools", action: "toggleDevTools", accelerator: "Ctrl+Shift+I" },
+      { label: "Reload", action: "reload" },
+      { label: "Force Reload", action: "forceReload" },
+      { label: "Toggle DevTools", action: "toggleDevTools" },
       { type: "separator" },
-      { label: "Reset Zoom", action: "resetZoom", accelerator: "Ctrl+0" },
-      { label: "Zoom In", action: "zoomIn", accelerator: "Ctrl+=" },
-      { label: "Zoom Out", action: "zoomOut", accelerator: "Ctrl+-" },
+      { label: "Reset Zoom", action: "resetZoom" },
+      { label: "Zoom In", action: "zoomIn" },
+      { label: "Zoom Out", action: "zoomOut" },
       { type: "separator" },
-      { label: "Toggle Full Screen", action: "toggleFullscreen", accelerator: "F11" }
+      { label: "Toggle Full Screen", action: "toggleFullscreen" }
     ]
   },
   {

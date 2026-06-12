@@ -38,7 +38,7 @@ function createLayoutStyle(config: MorphTermConfig): CSSProperties {
   return {
     "--morph-scrollbar-thumb": withAlpha(accentColor, 0.72),
     "--morph-scrollbar-thumb-hover": withAlpha(accentColor, 0.92),
-    "--morph-scrollbar-track": withAlpha("#0f1115", 0.42),
+    "--morph-scrollbar-track": withAlpha("#0b0f14", 0.42),
     "--morph-readability-opacity":
       config.appearance.background.type === "image" ? 0.18 : 0.38
   } as CSSProperties;
@@ -64,7 +64,7 @@ function createBackgroundStyle(
         : undefined,
       backgroundPosition: "center",
       backgroundSize: "cover",
-      backgroundColor: "#0f1115"
+      backgroundColor: "#0b0f14"
     };
   }
 

@@ -8,7 +8,10 @@ import type {
   MorphTermTypingEffect
 } from "../shared/config/config-types";
 import { defaultConfig } from "../shared/config/default-config";
-import { isTerminalReservedShortcut, isValidShortcut } from "../shared/config/keybinding-safety";
+import {
+  isTerminalReservedShortcut,
+  isValidShortcut
+} from "../shared/config/keybinding-safety";
 
 interface SettingsPanelProps {
   previewConfig: MorphTermConfig;
@@ -259,7 +262,7 @@ export const SettingsPanel = memo(function SettingsPanel({
   };
 
   return (
-    <aside className="settings-panel" aria-label="Appearance settings">
+    <aside className="settings-panel" aria-label="Terminal settings">
       <header className="settings-header">
         <div>
           <p className="settings-eyebrow">MorphTerm</p>
