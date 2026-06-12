@@ -1,16 +1,14 @@
-name: CI
+name: Release
 
 on:
   push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -18,8 +16,8 @@ permissions:
   id-token: write
 
 jobs:
-  typecheck-and-build:
-    name: Typecheck and build
+  windows-portable:
+    name: Signed Windows portable
     runs-on: windows-latest
 
     steps:
@@ -41,21 +39,20 @@ jobs:
       - name: Test
         run: npm run test
 
-      - name: Build
-        run: npm run build
+      - name: Build signed Windows portable
+        run: npm run dist:win:release
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
 
-      - name: Package Windows portable
-        run: npm run dist:win
-
-      - name: Upload Windows portable artifact
+      - name: Upload signed Windows portable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: morphterm-windows-portable
+          name: morphterm-windows-portable-signed
           path: release/MorphTerm-*.exe
           if-no-files-found: error
 
-      - name: Attest Windows portable provenance
-        if: github.event_name == 'push'
+      - name: Attest signed Windows portable provenance
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: release/MorphTerm-*.exe

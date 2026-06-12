@@ -18,15 +18,26 @@ const rendererDevUrl = "http://127.0.0.1:5173";
 export function assertTrustedIpcSender(event: IpcMainInvokeEvent): void {
   const frameUrl = event.senderFrame.url;
 
-  if (
-    isPackagedRendererUrl(frameUrl) ||
-    frameUrl === rendererDevUrl ||
-    frameUrl.startsWith(`${rendererDevUrl}/`)
-  ) {
+  if (isTrustedIpcSenderUrl(frameUrl)) {
     return;
   }
 
   throw new Error(`Rejected IPC call from untrusted frame: ${frameUrl}`);
+}
+
+export function isTrustedIpcSenderUrl(
+  frameUrl: string,
+  isPackaged = isPackagedRuntime()
+): boolean {
+  if (isPackaged) {
+    return isPackagedRendererUrl(frameUrl);
+  }
+
+  return (
+    isPackagedRendererUrl(frameUrl) ||
+    frameUrl === rendererDevUrl ||
+    frameUrl.startsWith(`${rendererDevUrl}/`)
+  );
 }
 
 function isPackagedRendererUrl(frameUrl: string): boolean {
@@ -49,6 +60,10 @@ function isPackagedRendererUrl(frameUrl: string): boolean {
 
 function getPackagedRendererIndexPath(): string {
   return path.resolve(__dirname, "../renderer/index.html");
+}
+
+function isPackagedRuntime(): boolean {
+  return Boolean(process.versions.electron && !process.defaultApp);
 }
 
 export function asConfigUpdate(value: unknown): MorphTermConfigUpdate {

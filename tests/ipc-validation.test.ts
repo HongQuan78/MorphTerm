@@ -8,7 +8,8 @@ import {
   asTerminalCreateRequest,
   asTerminalResizeRequest,
   asTerminalWriteRequest,
-  assertTrustedIpcSender
+  assertTrustedIpcSender,
+  isTrustedIpcSenderUrl
 } from "../src/main/ipcValidation";
 
 describe("terminal IPC validation", () => {
@@ -69,7 +70,23 @@ describe("image path validation", () => {
 });
 
 describe("trusted IPC sender validation", () => {
-  it("allows packaged and local development renderer origins", () => {
+  it("allows only the packaged renderer index in packaged mode", () => {
+    const packagedRendererUrl = pathToFileURL(
+      path.resolve(__dirname, "../src/renderer/index.html")
+    ).toString();
+    const untrustedFileUrl = pathToFileURL(
+      path.resolve(__dirname, "../src/renderer-copy/index.html")
+    ).toString();
+
+    assert.equal(isTrustedIpcSenderUrl(packagedRendererUrl, true), true);
+    assert.equal(isTrustedIpcSenderUrl(untrustedFileUrl, true), false);
+    assert.equal(
+      isTrustedIpcSenderUrl("http://127.0.0.1:5173/settings", true),
+      false
+    );
+  });
+
+  it("allows local development renderer origin outside packaged mode", () => {
     const packagedRendererUrl = pathToFileURL(
       path.resolve(__dirname, "../src/renderer/index.html")
     ).toString();
