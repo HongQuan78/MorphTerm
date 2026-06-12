@@ -40,10 +40,10 @@ export type MorphTermKeybindingAction =
   | "closePane"
   | "toggleSettings";
 
-export type MorphTermKeybindingsConfig = Record<
+export type MorphTermKeybindingsConfig = Partial<Record<
   MorphTermKeybindingAction,
   string
->;
+>>;
 
 export interface MorphTermConfig {
   fontFamily: string;

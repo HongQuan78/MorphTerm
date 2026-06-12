@@ -4,13 +4,13 @@ import { getKeybindingAction } from "../src/renderer/keybindings";
 import type { MorphTermKeybindingsConfig } from "../src/shared/config/config-types";
 
 const keybindings: MorphTermKeybindingsConfig = {
-  newTab: "Ctrl+Shift+T",
-  closeTab: "Ctrl+Shift+W",
+  newTab: "Ctrl+Shift+F1",
+  closeTab: "Ctrl+Shift+F2",
   nextTab: "Ctrl+Tab",
   previousTab: "Ctrl+Shift+Tab",
-  splitRight: "Ctrl+Shift+D",
-  splitDown: "Ctrl+Shift+E",
-  closePane: "Ctrl+Shift+X",
+  splitRight: "Ctrl+Shift+F3",
+  splitDown: "Ctrl+Shift+F4",
+  closePane: "Ctrl+Shift+F5",
   toggleSettings: "Ctrl+,"
 };
 
@@ -31,8 +31,28 @@ function keyboardEvent(
 describe("getKeybindingAction", () => {
   it("matches configured shortcuts", () => {
     assert.equal(
-      getKeybindingAction(keyboardEvent("T", { ctrlKey: true, shiftKey: true }), keybindings),
+      getKeybindingAction(keyboardEvent("F1", { ctrlKey: true, shiftKey: true }), keybindings),
       "newTab"
+    );
+    assert.equal(
+      getKeybindingAction(keyboardEvent("F2", { ctrlKey: true, shiftKey: true }), keybindings),
+      "closeTab"
+    );
+    assert.equal(
+      getKeybindingAction(keyboardEvent("Tab", { ctrlKey: true }), keybindings),
+      "nextTab"
+    );
+    assert.equal(
+      getKeybindingAction(keyboardEvent("F3", { ctrlKey: true, shiftKey: true }), keybindings),
+      "splitRight"
+    );
+    assert.equal(
+      getKeybindingAction(keyboardEvent("F4", { ctrlKey: true, shiftKey: true }), keybindings),
+      "splitDown"
+    );
+    assert.equal(
+      getKeybindingAction(keyboardEvent("F5", { ctrlKey: true, shiftKey: true }), keybindings),
+      "closePane"
     );
     assert.equal(
       getKeybindingAction(keyboardEvent(",", { ctrlKey: true }), keybindings),
@@ -42,14 +62,24 @@ describe("getKeybindingAction", () => {
 
   it("requires exact modifier matches", () => {
     assert.equal(
-      getKeybindingAction(keyboardEvent("T", { ctrlKey: true }), keybindings),
+      getKeybindingAction(keyboardEvent("Tab"), keybindings),
       null
     );
     assert.equal(
       getKeybindingAction(
-        keyboardEvent("T", { ctrlKey: true, shiftKey: true, altKey: true }),
+        keyboardEvent("Tab", { ctrlKey: true, altKey: true }),
         keybindings
       ),
+      null
+    );
+  });
+
+  it("ignores terminal-reserved control letter shortcuts", () => {
+    assert.equal(
+      getKeybindingAction(keyboardEvent("T", { ctrlKey: true, shiftKey: true }), {
+        ...keybindings,
+        newTab: "Ctrl+Shift+T"
+      }),
       null
     );
   });

@@ -389,6 +389,10 @@ export function TerminalView() {
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
+      if (isKeybindingCaptureTarget(event.target)) {
+        return;
+      }
+
       const action = getKeybindingAction(event, previewConfig.keybindings);
 
       if (
@@ -899,6 +903,13 @@ function isSettingsFormControl(target: EventTarget | null): boolean {
     (target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement)
+  );
+}
+
+function isKeybindingCaptureTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest("[data-keybinding-capture='true']") !== null
   );
 }
 

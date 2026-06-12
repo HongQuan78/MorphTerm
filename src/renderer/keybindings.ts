@@ -2,16 +2,21 @@ import type {
   MorphTermKeybindingAction,
   MorphTermKeybindingsConfig
 } from "../shared/config/config-types";
+import { isTerminalReservedShortcut } from "../shared/config/keybinding-safety";
 
 export function getKeybindingAction(
   event: KeyboardEvent,
   keybindings: MorphTermKeybindingsConfig
 ): MorphTermKeybindingAction | null {
   const entries = Object.entries(keybindings) as Array<
-    [MorphTermKeybindingAction, string]
+    [MorphTermKeybindingAction, string | undefined]
   >;
 
   for (const [action, shortcut] of entries) {
+    if (!shortcut) {
+      continue;
+    }
+
     if (shortcutMatchesEvent(shortcut, event)) {
       return action;
     }
@@ -21,6 +26,10 @@ export function getKeybindingAction(
 }
 
 function shortcutMatchesEvent(shortcut: string, event: KeyboardEvent): boolean {
+  if (isTerminalReservedShortcut(shortcut)) {
+    return false;
+  }
+
   const parsedShortcut = parseShortcut(shortcut);
 
   if (!parsedShortcut) {

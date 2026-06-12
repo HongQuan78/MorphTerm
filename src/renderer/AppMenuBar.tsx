@@ -55,8 +55,8 @@ const menus: MenuDefinition[] = [
   {
     label: "Window",
     items: [
-      { label: "Minimize", action: "minimize", accelerator: "Ctrl+M" },
-      { label: "Close Window", action: "close", accelerator: "Ctrl+W" }
+      { label: "Minimize", action: "minimize" },
+      { label: "Close Window", action: "close" }
     ]
   },
   {

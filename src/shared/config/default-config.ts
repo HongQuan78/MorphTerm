@@ -42,13 +42,13 @@ export const defaultConfig: MorphTermConfig = {
     customArgs: []
   },
   keybindings: {
-    newTab: "Ctrl+Shift+T",
-    closeTab: "Ctrl+Shift+W",
+    newTab: "Ctrl+Shift+F1",
+    closeTab: "Ctrl+Shift+F2",
     nextTab: "Ctrl+Tab",
     previousTab: "Ctrl+Shift+Tab",
-    splitRight: "Ctrl+Shift+D",
-    splitDown: "Ctrl+Shift+E",
-    closePane: "Ctrl+Shift+X",
+    splitRight: "Ctrl+Shift+F3",
+    splitDown: "Ctrl+Shift+F4",
+    closePane: "Ctrl+Shift+F5",
     toggleSettings: "Ctrl+,"
   }
 };

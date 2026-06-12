@@ -1,4 +1,5 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
@@ -6,6 +7,8 @@ import type {
   MorphTermShellProfile,
   MorphTermTypingEffect
 } from "../shared/config/config-types";
+import { defaultConfig } from "../shared/config/default-config";
+import { isTerminalReservedShortcut, isValidShortcut } from "../shared/config/keybinding-safety";
 
 interface SettingsPanelProps {
   previewConfig: MorphTermConfig;
@@ -81,6 +84,11 @@ export const SettingsPanel = memo(function SettingsPanel({
   const [draft, setDraft] = useState<MorphTermConfig>(previewConfig);
   const [status, setStatus] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [recordingKeybinding, setRecordingKeybinding] =
+    useState<MorphTermKeybindingAction | null>(null);
+  const keybindingInputRefs = useRef<
+    Partial<Record<MorphTermKeybindingAction, HTMLInputElement | null>>
+  >({});
   const gradientDraft = useMemo(
     () => parseGradient(draft.appearance.background.value),
     [draft.appearance.background.value]
@@ -191,7 +199,63 @@ export const SettingsPanel = memo(function SettingsPanel({
     setDraft(savedConfig);
     onPreviewConfigChange(savedConfig);
     setHasUnsavedChanges(false);
+    setRecordingKeybinding(null);
     setStatus("");
+  };
+
+  const updateKeybinding = (
+    action: MorphTermKeybindingAction,
+    shortcut: string | undefined
+  ) => {
+    updateDraft({
+      ...draft,
+      keybindings: {
+        ...draft.keybindings,
+        [action]: shortcut
+      }
+    });
+  };
+
+  const recordKeybinding = (
+    action: MorphTermKeybindingAction,
+    event: ReactKeyboardEvent<HTMLInputElement>
+  ) => {
+    if (recordingKeybinding !== action) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.key === "Escape") {
+      setRecordingKeybinding(null);
+      setStatus("");
+      return;
+    }
+
+    const shortcut = shortcutFromKeyboardEvent(event);
+
+    if (!shortcut) {
+      setStatus("Press a key with Ctrl, Alt, Shift, or Meta.");
+      return;
+    }
+
+    if (!isValidShortcut(shortcut)) {
+      setStatus(
+        isTerminalReservedShortcut(shortcut)
+          ? "That shortcut is reserved for terminal input."
+          : "That shortcut is not supported."
+      );
+      return;
+    }
+
+    updateKeybinding(action, shortcut);
+    setRecordingKeybinding(null);
+  };
+
+  const startRecordingKeybinding = (action: MorphTermKeybindingAction) => {
+    setRecordingKeybinding(action);
+    requestAnimationFrame(() => keybindingInputRefs.current[action]?.focus());
   };
 
   return (
@@ -517,12 +581,51 @@ export const SettingsPanel = memo(function SettingsPanel({
           {keybindingLabels.map((keybinding) => (
             <div className="keybinding-row" key={keybinding.action}>
               <span>{keybinding.label}</span>
-              <kbd>{draft.keybindings[keybinding.action]}</kbd>
+              <div className="keybinding-controls">
+                <input
+                  aria-label={`${keybinding.label} shortcut`}
+                  className="keybinding-shortcut-input"
+                  data-keybinding-capture="true"
+                  readOnly
+                  ref={(element) => {
+                    keybindingInputRefs.current[keybinding.action] = element;
+                  }}
+                  value={
+                    recordingKeybinding === keybinding.action
+                      ? "Press shortcut..."
+                      : draft.keybindings[keybinding.action] ?? "Unassigned"
+                  }
+                  onFocus={() => setRecordingKeybinding(keybinding.action)}
+                  onBlur={() =>
+                    setRecordingKeybinding((currentAction) =>
+                      currentAction === keybinding.action ? null : currentAction
+                    )
+                  }
+                  onKeyDown={(event) => recordKeybinding(keybinding.action, event)}
+                />
+                <button
+                  type="button"
+                  onClick={() => startRecordingKeybinding(keybinding.action)}
+                >
+                  Set
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateKeybinding(
+                      keybinding.action,
+                      defaultConfig.keybindings[keybinding.action]
+                    )
+                  }
+                >
+                  Default
+                </button>
+              </div>
             </div>
           ))}
         </div>
         <p className="settings-note">
-          Edit keybindings in config JSON for now, then save or restart MorphTerm.
+          Press Set, then enter a shortcut. Terminal-reserved control-letter shortcuts are rejected.
         </p>
       </section>
       </div>
@@ -590,4 +693,39 @@ function parseShellArgs(value: string): string[] {
     .split(" ")
     .map((argument) => argument.trim())
     .filter(Boolean);
+}
+
+function shortcutFromKeyboardEvent(event: ReactKeyboardEvent): string | null {
+  if (isModifierKey(event.key)) {
+    return null;
+  }
+
+  const modifiers = [
+    event.ctrlKey ? "Ctrl" : "",
+    event.shiftKey ? "Shift" : "",
+    event.altKey ? "Alt" : "",
+    event.metaKey ? "Meta" : ""
+  ].filter(Boolean);
+
+  if (modifiers.length === 0) {
+    return null;
+  }
+
+  return [...modifiers, normalizeShortcutDisplayKey(event.key)].join("+");
+}
+
+function isModifierKey(key: string): boolean {
+  return ["Alt", "AltGraph", "Control", "Meta", "Shift"].includes(key);
+}
+
+function normalizeShortcutDisplayKey(key: string): string {
+  if (key === " ") {
+    return "Space";
+  }
+
+  if (key.length === 1) {
+    return key.toUpperCase();
+  }
+
+  return key;
 }

@@ -62,6 +62,20 @@ describe("validateConfig", () => {
       blur: 0
     });
   });
+
+  it("replaces terminal-reserved control letter keybindings with safe defaults", () => {
+    const config = validateConfig({
+      keybindings: {
+        newTab: "Ctrl+Shift+T",
+        splitRight: "Ctrl+Shift+D",
+        toggleSettings: "Ctrl+,"
+      }
+    });
+
+    assert.equal(config.keybindings.newTab, defaultConfig.keybindings.newTab);
+    assert.equal(config.keybindings.splitRight, defaultConfig.keybindings.splitRight);
+    assert.equal(config.keybindings.toggleSettings, "Ctrl+,");
+  });
 });
 
 describe("mergeConfig", () => {

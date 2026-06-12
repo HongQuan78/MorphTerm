@@ -1,4 +1,5 @@
 import { defaultConfig } from "./default-config";
+import { isValidShortcut } from "./keybinding-safety";
 import type {
   MorphTermBackgroundConfig,
   MorphTermConfig,
@@ -109,13 +110,15 @@ function sanitizeKeybindings(
   update: MorphTermConfigUpdate["keybindings"],
   base: MorphTermKeybindingsConfig
 ): MorphTermKeybindingsConfig {
-  return keybindingActions.reduce<MorphTermKeybindingsConfig>(
-    (keybindings, action) => ({
-      ...keybindings,
-      [action]: validShortcut(update?.[action], base[action])
-    }),
-    { ...base }
-  );
+  return keybindingActions.reduce<MorphTermKeybindingsConfig>((keybindings, action) => {
+    const shortcut = validShortcut(update?.[action], base[action]);
+
+    if (shortcut) {
+      keybindings[action] = shortcut;
+    }
+
+    return keybindings;
+  }, {});
 }
 
 function normalizeLegacyBackground(
@@ -191,15 +194,18 @@ function clampNumber(
   return Math.min(Math.max(value, min), max);
 }
 
-function validShortcut(value: unknown, fallback: string): string {
+function validShortcut(value: unknown, fallback: string | undefined): string | undefined {
+  const fallbackShortcut =
+    typeof fallback === "string" && isValidShortcut(fallback) ? fallback : undefined;
+
   if (typeof value !== "string") {
-    return fallback;
+    return fallbackShortcut;
   }
 
   const shortcut = value.trim();
 
-  if (!shortcut || !/^[a-z0-9,+\-\[\]`./\\ ]+$/i.test(shortcut)) {
-    return fallback;
+  if (!isValidShortcut(shortcut)) {
+    return fallbackShortcut;
   }
 
   return shortcut;
