@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   asImagePath,
   asTerminalAttachRequest,
@@ -58,8 +60,12 @@ describe("image path validation", () => {
 
 describe("trusted IPC sender validation", () => {
   it("allows packaged and local development renderer origins", () => {
+    const packagedRendererUrl = pathToFileURL(
+      path.resolve(__dirname, "../src/renderer/index.html")
+    ).toString();
+
     assert.doesNotThrow(() =>
-      assertTrustedIpcSender({ senderFrame: { url: "file:///app/index.html" } } as never)
+      assertTrustedIpcSender({ senderFrame: { url: packagedRendererUrl } } as never)
     );
     assert.doesNotThrow(() =>
       assertTrustedIpcSender({
@@ -69,10 +75,21 @@ describe("trusted IPC sender validation", () => {
   });
 
   it("rejects untrusted renderer origins", () => {
+    const untrustedFileUrl = pathToFileURL(
+      path.resolve(__dirname, "../src/renderer-copy/index.html")
+    ).toString();
+
     assert.throws(
       () =>
         assertTrustedIpcSender({
           senderFrame: { url: "https://example.com" }
+        } as never),
+      /Rejected IPC call from untrusted frame/
+    );
+    assert.throws(
+      () =>
+        assertTrustedIpcSender({
+          senderFrame: { url: untrustedFileUrl }
         } as never),
       /Rejected IPC call from untrusted frame/
     );

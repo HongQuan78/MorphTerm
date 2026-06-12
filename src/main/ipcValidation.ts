@@ -1,4 +1,6 @@
 import type { IpcMainInvokeEvent } from "electron";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { MorphTermConfigUpdate } from "../shared/config/config-types";
 import type {
   TerminalAttachRequest,
@@ -9,19 +11,42 @@ import type {
 } from "../shared/terminalIpc";
 
 const maxTerminalInputLength = 64 * 1024;
+const rendererDevUrl = "http://127.0.0.1:5173";
 
 export function assertTrustedIpcSender(event: IpcMainInvokeEvent): void {
   const frameUrl = event.senderFrame.url;
 
   if (
-    frameUrl.startsWith("file://") ||
-    frameUrl === "http://127.0.0.1:5173" ||
-    frameUrl.startsWith("http://127.0.0.1:5173/")
+    isPackagedRendererUrl(frameUrl) ||
+    frameUrl === rendererDevUrl ||
+    frameUrl.startsWith(`${rendererDevUrl}/`)
   ) {
     return;
   }
 
   throw new Error(`Rejected IPC call from untrusted frame: ${frameUrl}`);
+}
+
+function isPackagedRendererUrl(frameUrl: string): boolean {
+  let framePath: string;
+
+  try {
+    const url = new URL(frameUrl);
+
+    if (url.protocol !== "file:") {
+      return false;
+    }
+
+    framePath = fileURLToPath(url);
+  } catch {
+    return false;
+  }
+
+  return path.resolve(framePath) === getPackagedRendererIndexPath();
+}
+
+function getPackagedRendererIndexPath(): string {
+  return path.resolve(__dirname, "../renderer/index.html");
 }
 
 export function asConfigUpdate(value: unknown): MorphTermConfigUpdate {
