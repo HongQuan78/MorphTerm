@@ -13,10 +13,20 @@ import {
 
 describe("terminal IPC validation", () => {
   it("normalizes optional terminal dimensions", () => {
-    assert.deepEqual(asTerminalCreateRequest({ cols: 120.9, rows: 0.1 }), {
-      cols: 120,
-      rows: 1
-    });
+    assert.deepEqual(
+      asTerminalCreateRequest({ cols: 120.9, rows: 0.1 }),
+      {
+        cols: 120,
+        rows: 1
+      }
+    );
+    assert.deepEqual(
+      asTerminalCreateRequest({ cols: 10_000, rows: 10_000 }),
+      {
+        cols: 500,
+        rows: 200
+      }
+    );
   });
 
   it("requires an id for attach, write, and resize requests", () => {

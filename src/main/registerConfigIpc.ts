@@ -1,6 +1,11 @@
 import { BrowserWindow, dialog, ipcMain } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  allowBackgroundImagePath,
+  allowConfiguredBackgroundImage,
+  isAllowedBackgroundImagePath
+} from "./backgroundImageAccess";
 import { ConfigManager } from "./ConfigManager";
 import { configChannels } from "../shared/config/config-ipc";
 import type { MorphTermConfigUpdate } from "../shared/config/config-types";
@@ -13,6 +18,9 @@ import {
 const maxBackgroundImageBytes = 25 * 1024 * 1024;
 
 export function registerConfigIpc(configManager: ConfigManager): void {
+  const allowedBackgroundImages = new Set<string>();
+  allowConfiguredBackgroundImage(allowedBackgroundImages, configManager.get());
+
   ipcMain.handle(configChannels.get, (event) => {
     assertTrustedIpcSender(event);
 
@@ -55,14 +63,23 @@ export function registerConfigIpc(configManager: ConfigManager): void {
       return null;
     }
 
-    return result.filePaths[0] ?? null;
+    const selectedImagePath = result.filePaths[0] ?? null;
+
+    if (selectedImagePath) {
+      allowBackgroundImagePath(allowedBackgroundImages, selectedImagePath);
+    }
+
+    return selectedImagePath;
   });
 
   ipcMain.handle(configChannels.getBackgroundImageData, async (event, imagePath: string) => {
     assertTrustedIpcSender(event);
     const safeImagePath = asImagePath(imagePath);
 
-    if (!safeImagePath) {
+    if (
+      !safeImagePath ||
+      !isAllowedBackgroundImagePath(allowedBackgroundImages, safeImagePath)
+    ) {
       return null;
     }
 

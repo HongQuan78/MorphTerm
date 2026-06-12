@@ -38,3 +38,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Package Windows portable
+        run: npm run dist:win

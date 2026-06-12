@@ -13,6 +13,7 @@
     "outDir": "dist-test"
   },
   "include": [
+    "src/main/backgroundImageAccess.ts",
     "src/main/ipcValidation.ts",
     "src/renderer/keybindings.ts",
     "src/shared/**/*.ts",

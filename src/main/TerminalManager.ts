@@ -18,6 +18,8 @@ import type {
 } from "../shared/terminalIpc";
 
 const maxSessionHistoryLength = 200_000;
+const maxTerminalColumns = 500;
+const maxTerminalRows = 200;
 type ConfigProvider = () => MorphTermConfig;
 
 interface ShellLaunchConfig {
@@ -47,8 +49,8 @@ export class TerminalManager {
     const shellLaunchConfig = getShellLaunchConfig(this.getConfig().shell);
     const terminalProcess = pty.spawn(shellLaunchConfig.shell, shellLaunchConfig.args, {
       name: "xterm-256color",
-      cols: options.cols ?? 80,
-      rows: options.rows ?? 24,
+      cols: normalizeColumns(options.cols ?? 80),
+      rows: normalizeRows(options.rows ?? 24),
       cwd: getDefaultWorkingDirectory(),
       env: process.env,
       useConpty: false
@@ -110,8 +112,8 @@ export class TerminalManager {
 
     if (options.cols && options.rows) {
       session.process.resize(
-        normalizeDimension(options.cols),
-        normalizeDimension(options.rows)
+        normalizeColumns(options.cols),
+        normalizeRows(options.rows)
       );
     }
 
@@ -130,7 +132,7 @@ export class TerminalManager {
 
   resize(webContents: WebContents, id: string, cols: number, rows: number): void {
     const session = this.getOwnedSession(webContents, id);
-    session.process.resize(normalizeDimension(cols), normalizeDimension(rows));
+    session.process.resize(normalizeColumns(cols), normalizeRows(rows));
   }
 
   dispose(webContents: WebContents, id: string): void {
@@ -265,12 +267,20 @@ function getDefaultWorkingDirectory(): string {
   return process.env.HOME || process.env.USERPROFILE || os.homedir();
 }
 
-function normalizeDimension(value: number): number {
+function normalizeColumns(value: number): number {
+  return normalizeDimension(value, maxTerminalColumns);
+}
+
+function normalizeRows(value: number): number {
+  return normalizeDimension(value, maxTerminalRows);
+}
+
+function normalizeDimension(value: number, max: number): number {
   if (!Number.isFinite(value) || value < 1) {
     return 1;
   }
 
-  return Math.floor(value);
+  return Math.min(max, Math.floor(value));
 }
 
 function appendHistory(history: string, data: string): string {

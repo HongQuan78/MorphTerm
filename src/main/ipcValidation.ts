@@ -11,6 +11,8 @@ import type {
 } from "../shared/terminalIpc";
 
 const maxTerminalInputLength = 64 * 1024;
+const maxTerminalColumns = 500;
+const maxTerminalRows = 200;
 const rendererDevUrl = "http://127.0.0.1:5173";
 
 export function assertTrustedIpcSender(event: IpcMainInvokeEvent): void {
@@ -63,8 +65,8 @@ export function asTerminalCreateRequest(value: unknown): TerminalCreateRequest {
   }
 
   return {
-    cols: optionalDimension(value.cols),
-    rows: optionalDimension(value.rows)
+    cols: optionalDimension(value.cols, "terminal columns"),
+    rows: optionalDimension(value.rows, "terminal rows")
   };
 }
 
@@ -73,8 +75,8 @@ export function asTerminalAttachRequest(value: unknown): TerminalAttachRequest {
 
   return {
     id: requireString(request.id, "terminal session id"),
-    cols: optionalDimension(request.cols),
-    rows: optionalDimension(request.rows)
+    cols: optionalDimension(request.cols, "terminal columns"),
+    rows: optionalDimension(request.rows, "terminal rows")
   };
 }
 
@@ -144,8 +146,8 @@ function requireString(value: unknown, label: string): string {
   return value;
 }
 
-function optionalDimension(value: unknown): number | undefined {
-  return value === undefined ? undefined : requireDimension(value, "terminal dimension");
+function optionalDimension(value: unknown, label: string): number | undefined {
+  return value === undefined ? undefined : requireDimension(value, label);
 }
 
 function requireDimension(value: unknown, label: string): number {
@@ -153,5 +155,8 @@ function requireDimension(value: unknown, label: string): number {
     throw new Error(`Invalid ${label}`);
   }
 
-  return Math.max(1, Math.floor(value));
+  return Math.min(
+    label === "terminal rows" ? maxTerminalRows : maxTerminalColumns,
+    Math.max(1, Math.floor(value))
+  );
 }

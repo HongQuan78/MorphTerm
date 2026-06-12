@@ -28,6 +28,16 @@ app.disableHardwareAcceleration();
 app.commandLine.appendSwitch("disable-gpu");
 app.commandLine.appendSwitch("disable-gpu-compositing");
 app.commandLine.appendSwitch("disable-software-rasterizer");
+app.on("certificate-error", (event, _webContents, _url, _error, _certificate, callback) => {
+  event.preventDefault();
+  callback(false);
+});
+app.on("web-contents-created", (_event, webContents) => {
+  webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  webContents.on("will-attach-webview", (event) => {
+    event.preventDefault();
+  });
+});
 
 function createMainWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -61,12 +71,40 @@ function createMainWindow(): void {
       callback(false);
     }
   );
+  applyContentSecurityPolicy(mainWindow);
 
   if (app.isPackaged) {
     void mainWindow.loadFile(path.join(getPackagedRendererDirectory(), "index.html"));
   } else {
     void mainWindow.loadURL(rendererDevUrl);
   }
+}
+
+function applyContentSecurityPolicy(window: BrowserWindow): void {
+  if (!app.isPackaged) {
+    return;
+  }
+
+  const contentSecurityPolicy = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: file:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-src 'none'"
+  ].join("; ");
+
+  window.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [contentSecurityPolicy]
+      }
+    });
+  });
 }
 
 function getAppIconPath(): string {
