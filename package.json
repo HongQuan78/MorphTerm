@@ -11,7 +11,7 @@
     "dist:win": "npm run build && electron-builder --win portable --config.win.signAndEditExecutable=false",
     "dist:win:release": "npm run build && electron-builder --win portable --config electron-builder.release.cjs",
     "smoke:terminal:windows": "node scripts/smoke-terminal-windows.cjs",
-    "test": "tsc -p tsconfig.test.json && node --test \"dist-test/tests/**/*.test.js\"",
+    "test": "tsc -p tsconfig.test.json && node scripts/run-node-tests.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.electron.json && tsc --noEmit -p tsconfig.renderer.json"
   },
   "keywords": [
