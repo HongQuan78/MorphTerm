@@ -213,7 +213,8 @@ export function getTerminalSpawnOptions(
     rows: normalizeRows(rows),
     cwd,
     env: getTerminalEnvironment(env),
-    useConpty: platform === "win32"
+    useConpty: platform === "win32",
+    useConptyDll: platform === "win32"
   };
 }
 

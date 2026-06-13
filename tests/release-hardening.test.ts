@@ -79,8 +79,15 @@ describe("release hardening configuration", () => {
     assert.match(ciWorkflow, /subject-path: release\/MorphTerm-\*\.exe/);
     assert.match(releaseWorkflow, /actions\/upload-artifact@v4/);
     assert.match(releaseWorkflow, /actions\/attest-build-provenance@v2/);
+    assert.match(releaseWorkflow, /contents: write/);
     assert.match(releaseWorkflow, /attestations: write/);
     assert.match(releaseWorkflow, /id-token: write/);
     assert.match(releaseWorkflow, /subject-path: release\/MorphTerm-\*\.exe/);
+    assert.match(releaseWorkflow, /Get-FileHash -Algorithm SHA256/);
+    assert.match(releaseWorkflow, /Get-ChildItem -Path release -Filter "MorphTerm-\*\.exe"/);
+    assert.match(releaseWorkflow, /release\/MorphTerm-windows-portable\.sha256/);
+    assert.match(releaseWorkflow, /gh release create "\$\{\{ github\.ref_name \}\}"/);
+    assert.match(releaseWorkflow, /--generate-notes/);
+    assert.match(releaseWorkflow, /--verify-tag/);
   });
 });

@@ -1,15 +1,19 @@
 import { app, BrowserWindow } from "electron";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { ConfigManager } from "./ConfigManager";
 import { TerminalManager } from "./TerminalManager";
 import { registerAppMenuIpc } from "./registerAppMenuIpc";
 import { registerConfigIpc } from "./registerConfigIpc";
 import { registerTerminalIpc } from "./registerTerminalIpc";
 import { appInfo } from "../shared/appInfo";
+import {
+  getPackagedRendererDirectory,
+  getPackagedRendererIndexPath,
+  isAllowedRendererUrl,
+  rendererDevUrl
+} from "./rendererTrust";
 
-const rendererDevUrl = "http://127.0.0.1:5173";
 const projectGitHubUrl = "https://github.com/HongQuan78/MorphTerm";
 let configManager: ConfigManager;
 let terminalManager: TerminalManager;
@@ -63,7 +67,7 @@ function createMainWindow(): void {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    if (!isAllowedRendererUrl(url)) {
+    if (!isAllowedRendererUrl(url, app.isPackaged)) {
       event.preventDefault();
     }
   });
@@ -75,7 +79,7 @@ function createMainWindow(): void {
   applyContentSecurityPolicy(mainWindow);
 
   if (app.isPackaged) {
-    void mainWindow.loadFile(path.join(getPackagedRendererDirectory(), "index.html"));
+    void mainWindow.loadFile(getPackagedRendererIndexPath());
   } else {
     void mainWindow.loadURL(rendererDevUrl);
   }
@@ -114,44 +118,6 @@ function getAppIconPath(): string {
   }
 
   return path.join(process.cwd(), "public", "app-icon.png");
-}
-
-function isAllowedRendererUrl(url: string): boolean {
-  if (!app.isPackaged) {
-    return url === rendererDevUrl || url.startsWith(`${rendererDevUrl}/`);
-  }
-
-  let requestedPath: string;
-
-  try {
-    const requestedUrl = new URL(url);
-
-    if (requestedUrl.protocol !== "file:") {
-      return false;
-    }
-
-    requestedPath = fileURLToPath(requestedUrl);
-  } catch {
-    return false;
-  }
-
-  return isPathInsideDirectory(requestedPath, getPackagedRendererDirectory());
-}
-
-function getPackagedRendererDirectory(): string {
-  return path.resolve(__dirname, "../renderer");
-}
-
-function isPathInsideDirectory(filePath: string, directoryPath: string): boolean {
-  const normalizedFilePath = path.resolve(filePath);
-  const normalizedDirectoryPath = path.resolve(directoryPath);
-  const relativePath = path.relative(normalizedDirectoryPath, normalizedFilePath);
-
-  return relativePath === "" || (
-    relativePath.length > 0 &&
-    !relativePath.startsWith("..") &&
-    !path.isAbsolute(relativePath)
-  );
 }
 
 app.on("ready", () => {
