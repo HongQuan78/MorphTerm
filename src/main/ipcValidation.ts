@@ -16,11 +16,13 @@ const maxTerminalRows = 200;
 const rendererDevUrl = "http://127.0.0.1:5173";
 
 export function assertTrustedIpcSender(event: IpcMainInvokeEvent): void {
-  const frameUrl = event.senderFrame?.url;
+  const senderFrame = event.senderFrame;
 
-  if (!frameUrl) {
-    throw new Error("Rejected IPC call without a sender frame");
+  if (!senderFrame) {
+    throw new Error("Rejected IPC call without sender frame");
   }
+
+  const frameUrl = senderFrame.url;
 
   if (isTrustedIpcSenderUrl(frameUrl)) {
     return;
