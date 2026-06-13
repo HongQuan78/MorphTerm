@@ -121,7 +121,7 @@ Example config:
 
 ## Current Status
 
-MorphTerm is currently an early alpha. The core terminal experience works, but packaging, signing, cross-platform behavior, and advanced terminal workflows are still being improved.
+MorphTerm is currently a Windows production candidate. The core terminal experience works, including tabs, split panes, settings, validated configuration, and Windows shell smoke coverage. Store packaging, signing keys, and listing assets are still prepared separately from the local portable build.
 
 ## Roadmap
 

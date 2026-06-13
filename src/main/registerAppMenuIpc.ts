@@ -11,6 +11,10 @@ export function registerAppMenuIpc(projectGitHubUrl: string): void {
       throw new Error("Invalid app menu action");
     }
 
+    if (app.isPackaged && action === "toggleDevTools") {
+      return;
+    }
+
     await performAppMenuAction(action, projectGitHubUrl);
   });
 }
@@ -72,7 +76,17 @@ async function performAppMenuAction(
       window?.close();
       return;
     case "openGitHub":
-      await shell.openExternal(projectGitHubUrl);
+      await openExternalHttpUrl(projectGitHubUrl);
       return;
   }
+}
+
+async function openExternalHttpUrl(url: string): Promise<void> {
+  const parsedUrl = new URL(url);
+
+  if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+    throw new Error("External URL must use http or https");
+  }
+
+  await shell.openExternal(parsedUrl.toString());
 }
