@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { getTerminalSpawnOptions } from "../src/main/TerminalManager";
 
 describe("TerminalManager spawn options", () => {
-  it("uses ConPTY on Windows and normalizes terminal dimensions", () => {
+  it("uses ConPTY DLL on Windows and normalizes terminal dimensions", () => {
     const options = getTerminalSpawnOptions(
       10_000,
       10_000,
@@ -13,6 +13,7 @@ describe("TerminalManager spawn options", () => {
     );
 
     assert.equal(options.useConpty, true);
+    assert.equal(options.useConptyDll, true);
     assert.equal(options.name, "xterm-256color");
     assert.equal(options.cols, 500);
     assert.equal(options.rows, 200);
@@ -28,6 +29,7 @@ describe("TerminalManager spawn options", () => {
     });
 
     assert.equal(options.useConpty, false);
+    assert.equal(options.useConptyDll, false);
     assert.equal(options.env?.TERM, "screen-256color");
     assert.equal(options.env?.COLORTERM, "24bit");
   });
