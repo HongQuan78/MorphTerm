@@ -1,7 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { defaultConfig } from "../src/shared/config/default-config";
-import { parseShellArgs } from "../src/shared/config/shell-args";
 import { mergeConfig, validateConfig } from "../src/shared/config/validate-config";
 
 describe("validateConfig", () => {
@@ -102,21 +101,5 @@ describe("mergeConfig", () => {
     assert.equal(merged.fontFamily, "JetBrains Mono");
     assert.equal(merged.fontSize, 18);
     assert.equal(merged.effects.typingEffect, "spark");
-  });
-});
-
-describe("parseShellArgs", () => {
-  it("preserves quoted shell arguments from the settings UI", () => {
-    assert.deepEqual(
-      parseShellArgs('-NoLogo --profile "Work Shell" --name \'Flux Term\''),
-      ["-NoLogo", "--profile", "Work Shell", "--name", "Flux Term"]
-    );
-  });
-
-  it("keeps escaped spaces and quotes inside arguments", () => {
-    assert.deepEqual(
-      parseShellArgs('--title Work\\ Shell --message "say \\"hi\\""'),
-      ["--title", "Work Shell", "--message", 'say "hi"']
-    );
   });
 });

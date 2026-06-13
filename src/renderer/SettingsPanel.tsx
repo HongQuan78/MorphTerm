@@ -12,7 +12,6 @@ import {
   isTerminalReservedShortcut,
   isValidShortcut
 } from "../shared/config/keybinding-safety";
-import { parseShellArgs } from "../shared/config/shell-args";
 
 interface SettingsPanelProps {
   previewConfig: MorphTermConfig;
@@ -690,6 +689,13 @@ function configsAreDifferent(
 
 function formatOpacity(opacity: number): string {
   return opacity.toFixed(2).replace(/0$/, "");
+}
+
+function parseShellArgs(value: string): string[] {
+  return value
+    .split(" ")
+    .map((argument) => argument.trim())
+    .filter(Boolean);
 }
 
 function shortcutFromKeyboardEvent(event: ReactKeyboardEvent): string | null {

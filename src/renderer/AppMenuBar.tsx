@@ -43,6 +43,8 @@ const menus: MenuDefinition[] = [
     items: [
       { label: "Reload", action: "reload" },
       { label: "Force Reload", action: "forceReload" },
+      { label: "Toggle DevTools", action: "toggleDevTools" },
+      { type: "separator" },
       { label: "Reset Zoom", action: "resetZoom" },
       { label: "Zoom In", action: "zoomIn" },
       { label: "Zoom Out", action: "zoomOut" },

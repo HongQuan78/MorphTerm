@@ -6,25 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: "dist/renderer",
-    emptyOutDir: false,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules/@xterm")) {
-            return "xterm";
-          }
-
-          if (
-            id.includes("node_modules/react") ||
-            id.includes("node_modules/react-dom")
-          ) {
-            return "react";
-          }
-
-          return undefined;
-        }
-      }
-    }
+    emptyOutDir: false
   },
   server: {
     host: "127.0.0.1",
