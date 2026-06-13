@@ -1,6 +1,34 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { getTerminalSpawnOptions } from "../src/main/TerminalManager";
+import {
+  TerminalManager,
+  getTerminalSpawnOptions
+} from "../src/main/TerminalManager";
+
+interface TestTerminalSession {
+  id: string;
+  process: {
+    pid: number;
+    kill(): void;
+  };
+  shell: string;
+  webContents: {
+    id: number;
+    isDestroyed(): boolean;
+    send(): void;
+  };
+  history: string;
+  dataSubscription: {
+    dispose(): void;
+  };
+  exitSubscription: {
+    dispose(): void;
+  };
+}
+
+type TerminalManagerInternals = {
+  sessions: Map<string, TestTerminalSession>;
+};
 
 describe("TerminalManager spawn options", () => {
   it("uses ConPTY DLL on Windows and normalizes terminal dimensions", () => {
@@ -33,4 +61,58 @@ describe("TerminalManager spawn options", () => {
     assert.equal(options.env?.TERM, "screen-256color");
     assert.equal(options.env?.COLORTERM, "24bit");
   });
+
+  it("removes sessions even when terminal process cleanup fails", () => {
+    const manager = new TerminalManager();
+    const sessions = (manager as unknown as TerminalManagerInternals).sessions;
+    const warnings: unknown[][] = [];
+    const originalWarn = console.warn;
+
+    sessions.set("session-1", createTestSession({
+      kill() {
+        throw new Error("kill failed");
+      }
+    }));
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args);
+    };
+
+    try {
+      assert.doesNotThrow(() => manager.disposeAll());
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    assert.equal(sessions.has("session-1"), false);
+    assert.equal(warnings.length, 1);
+    assert.match(String(warnings[0]?.[0]), /Failed to dispose terminal process/);
+  });
 });
+
+function createTestSession(
+  processOverrides: Partial<TestTerminalSession["process"]> = {}
+): TestTerminalSession {
+  return {
+    id: "session-1",
+    process: {
+      pid: 123,
+      kill() {},
+      ...processOverrides
+    },
+    shell: "powershell.exe",
+    webContents: {
+      id: 1,
+      isDestroyed() {
+        return false;
+      },
+      send() {}
+    },
+    history: "",
+    dataSubscription: {
+      dispose() {}
+    },
+    exitSubscription: {
+      dispose() {}
+    }
+  };
+}
