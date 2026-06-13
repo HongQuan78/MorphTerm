@@ -1,6 +1,6 @@
 {
   "name": "morphterm",
-  "version": "0.1.0-alpha",
+  "version": "0.1.0",
   "description": "An open-source customizable desktop terminal inspired by Hyper.",
   "main": "dist/main/main.js",
   "scripts": {
@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.electron.json && vite build",
     "dist:win": "npm run build && electron-builder --win portable --config.win.signAndEditExecutable=false",
     "dist:win:release": "npm run build && electron-builder --win portable --config electron-builder.release.cjs",
+    "smoke:terminal:windows": "node scripts/smoke-terminal-windows.cjs",
     "test": "tsc -p tsconfig.test.json && node --test \"dist-test/tests/**/*.test.js\"",
     "typecheck": "tsc --noEmit -p tsconfig.electron.json && tsc --noEmit -p tsconfig.renderer.json"
   },
@@ -26,13 +27,19 @@
     "productName": "MorphTerm",
     "files": [
       "dist/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/node-pty/prebuilds/darwin-*/**/*",
+      "!node_modules/node-pty/prebuilds/win32-arm64/**/*",
+      "!node_modules/node-pty/prebuilds/**/*.pdb",
+      "!node_modules/node-pty/third_party/**/*"
     ],
     "asar": true,
     "asarUnpack": [
-      "node_modules/node-pty/build/Release/*.node"
+      "node_modules/node-pty/prebuilds/win32-x64/**/*",
+      "node_modules/node-pty/build/Release/**/*"
     ],
     "afterPack": "scripts/after-pack.cjs",
+    "npmRebuild": false,
     "directories": {
       "output": "release"
     },
@@ -57,12 +64,12 @@
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
+    "@vitejs/plugin-react": "^6.0.2",
     "concurrently": "^9.1.0",
-    "electron": "^28.3.3",
-    "electron-builder": "^24.13.3",
+    "electron": "^42.4.0",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11",
+    "vite": "^8.0.16",
     "wait-on": "^8.0.1"
   },
   "overrides": {

@@ -48,12 +48,7 @@ export class TerminalManager {
   ): TerminalCreateResult {
     const shellLaunchConfig = getShellLaunchConfig(this.getConfig().shell);
     const terminalProcess = pty.spawn(shellLaunchConfig.shell, shellLaunchConfig.args, {
-      name: "xterm-256color",
-      cols: normalizeColumns(options.cols ?? 80),
-      rows: normalizeRows(options.rows ?? 24),
-      cwd: getDefaultWorkingDirectory(),
-      env: process.env,
-      useConpty: false
+      ...getTerminalSpawnOptions(options.cols ?? 80, options.rows ?? 24)
     });
     const id = crypto.randomUUID();
 
@@ -205,6 +200,23 @@ export class TerminalManager {
   }
 }
 
+export function getTerminalSpawnOptions(
+  cols: number,
+  rows: number,
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+  cwd = getDefaultWorkingDirectory()
+): pty.IWindowsPtyForkOptions {
+  return {
+    name: "xterm-256color",
+    cols: normalizeColumns(cols),
+    rows: normalizeRows(rows),
+    cwd,
+    env: getTerminalEnvironment(env),
+    useConpty: platform === "win32"
+  };
+}
+
 function getShellLaunchConfig(shellConfig: MorphTermShellConfig): ShellLaunchConfig {
   if (shellConfig.profile === "custom" && shellConfig.customPath.trim()) {
     return {
@@ -265,6 +277,14 @@ function getPowerShellArgs(): string[] {
 
 function getDefaultWorkingDirectory(): string {
   return process.env.HOME || process.env.USERPROFILE || os.homedir();
+}
+
+function getTerminalEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return {
+    ...env,
+    TERM: env.TERM || "xterm-256color",
+    COLORTERM: env.COLORTERM || "truecolor"
+  };
 }
 
 function normalizeColumns(value: number): number {

@@ -1,5 +1,7 @@
 import {
   Fragment,
+  Suspense,
+  lazy,
   memo,
   useCallback,
   useEffect,
@@ -11,7 +13,6 @@ import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { SettingsPanel } from "./SettingsPanel";
 import { TerminalLayout } from "./TerminalLayout";
 import { getKeybindingAction } from "./keybindings";
 import type { EffectLayerHandle } from "./EffectLayer";
@@ -19,6 +20,9 @@ import { defaultConfig } from "../shared/config/default-config";
 import type { MorphTermConfig } from "../shared/config/config-types";
 
 const terminalLayoutStorageKey = "morphterm:terminal-layout-v1";
+const SettingsPanel = lazy(() =>
+  import("./SettingsPanel").then((module) => ({ default: module.SettingsPanel }))
+);
 
 interface TerminalPaneState {
   id: string;
@@ -552,14 +556,18 @@ export function TerminalView() {
         )}
       </div>
 
-      <SettingsPanel
-        previewConfig={previewConfig}
-        savedConfig={savedConfig}
-        isOpen={isSettingsOpen}
-        onClose={closeSettings}
-        onPreviewConfigChange={setPreviewConfig}
-        onSavedConfigChange={setSavedConfig}
-      />
+      {isSettingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsPanel
+            previewConfig={previewConfig}
+            savedConfig={savedConfig}
+            isOpen={isSettingsOpen}
+            onClose={closeSettings}
+            onPreviewConfigChange={setPreviewConfig}
+            onSavedConfigChange={setSavedConfig}
+          />
+        </Suspense>
+      )}
     </TerminalLayout>
   );
 }

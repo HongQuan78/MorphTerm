@@ -24,10 +24,11 @@ if (!app.isPackaged) {
   app.setPath("userData", devUserDataPath);
 }
 
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch("disable-gpu");
-app.commandLine.appendSwitch("disable-gpu-compositing");
-app.commandLine.appendSwitch("disable-software-rasterizer");
+if (process.env.MORPHTERM_DISABLE_GPU === "1") {
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch("disable-gpu");
+  app.commandLine.appendSwitch("disable-gpu-compositing");
+}
 app.on("certificate-error", (event, _webContents, _url, _error, _certificate, callback) => {
   event.preventDefault();
   callback(false);

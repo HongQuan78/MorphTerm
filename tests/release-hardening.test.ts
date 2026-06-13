@@ -5,9 +5,11 @@ import fs from "node:fs";
 interface PackageJson {
   scripts?: Record<string, string>;
   build?: {
+    files?: string[];
     asar?: boolean;
     asarUnpack?: string[];
     afterPack?: string;
+    npmRebuild?: boolean;
     win?: {
       signAndEditExecutable?: boolean;
     };
@@ -26,10 +28,25 @@ const afterPackScript = fs.readFileSync("scripts/after-pack.cjs", "utf8");
 describe("release hardening configuration", () => {
   it("packages with ASAR, node-pty native unpacking, signing, and fuse hardening", () => {
     assert.equal(packageJson.build?.asar, true);
+    assert.ok(
+      packageJson.build?.files?.includes(
+        "!node_modules/node-pty/prebuilds/darwin-*/**/*"
+      )
+    );
+    assert.ok(
+      packageJson.build?.files?.includes(
+        "!node_modules/node-pty/prebuilds/win32-arm64/**/*"
+      )
+    );
+    assert.ok(
+      packageJson.build?.files?.includes("!node_modules/node-pty/prebuilds/**/*.pdb")
+    );
     assert.deepEqual(packageJson.build?.asarUnpack, [
-      "node_modules/node-pty/build/Release/*.node"
+      "node_modules/node-pty/prebuilds/win32-x64/**/*",
+      "node_modules/node-pty/build/Release/**/*"
     ]);
     assert.equal(packageJson.build?.afterPack, "scripts/after-pack.cjs");
+    assert.equal(packageJson.build?.npmRebuild, false);
     assert.equal(packageJson.build?.win?.signAndEditExecutable, true);
     assert.ok(packageJson.devDependencies?.["@electron/fuses"]);
     assert.equal(fs.existsSync("scripts/after-pack.cjs"), true);
