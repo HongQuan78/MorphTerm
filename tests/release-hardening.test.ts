@@ -146,7 +146,9 @@ describe("release hardening configuration", () => {
     assert.match(releaseWorkflow, /Get-ChildItem -Path release -Filter "MorphTerm-\*\.appx"/);
     assert.match(releaseWorkflow, /release\/MorphTerm-windows-portable\.sha256/);
     assert.match(releaseWorkflow, /release\/MorphTerm-windows-store\.sha256/);
-    assert.match(releaseWorkflow, /gh release create "\$\{\{ github\.ref_name \}\}"/);
+    assert.match(releaseWorkflow, /\$releaseArgs = @\(/);
+    assert.match(releaseWorkflow, /"release"\s+"create"\s+"\$\{\{ github\.ref_name \}\}"/);
+    assert.match(releaseWorkflow, /gh @releaseArgs/);
     assert.match(releaseWorkflow, /--generate-notes/);
     assert.match(releaseWorkflow, /--verify-tag/);
   });

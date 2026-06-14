@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   windows-portable:
-    name: Signed Windows portable
+    name: Windows release packages
     runs-on: windows-latest
 
     steps:
@@ -39,13 +39,29 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Check Windows signing secrets
+        id: signing
+        shell: pwsh
+        env:
+          WINDOWS_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          WINDOWS_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: |
+          if ($env:WINDOWS_CSC_LINK -and $env:WINDOWS_CSC_KEY_PASSWORD) {
+            "available=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            "available=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Warning "Skipping signed portable build because Windows code-signing secrets are not configured."
+          }
+
       - name: Build signed Windows portable
+        if: steps.signing.outputs.available == 'true'
         run: npm run dist:win:release
         env:
           CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
 
       - name: Generate Windows portable checksum
+        if: steps.signing.outputs.available == 'true'
         shell: pwsh
         run: |
           Get-FileHash -Algorithm SHA256 release/MorphTerm-*.exe |
@@ -67,6 +83,7 @@ jobs:
             Set-Content -Path release/MorphTerm-windows-store.sha256 -Encoding ascii
 
       - name: Upload signed Windows portable artifact
+        if: steps.signing.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: morphterm-windows-portable-signed
@@ -85,6 +102,7 @@ jobs:
           if-no-files-found: error
 
       - name: Attest signed Windows portable provenance
+        if: steps.signing.outputs.available == 'true'
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: release/MorphTerm-*.exe
@@ -100,22 +118,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $portable = Get-ChildItem -Path release -Filter "MorphTerm-*.exe" | Select-Object -First 1
+          $portable = Get-ChildItem -Path release -Filter "MorphTerm-*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $storePackage = Get-ChildItem -Path release -Filter "MorphTerm-*.appx" | Select-Object -First 1
-
-          if (-not $portable) {
-            throw "No MorphTerm portable executable found in release/."
-          }
 
           if (-not $storePackage) {
             throw "No MorphTerm Microsoft Store package found in release/."
           }
 
-          gh release create "${{ github.ref_name }}" `
-            $portable.FullName `
-            release/MorphTerm-windows-portable.sha256 `
-            $storePackage.FullName `
-            release/MorphTerm-windows-store.sha256 `
-            --title "${{ github.ref_name }}" `
-            --generate-notes `
-            --verify-tag
+          $assets = @(
+            $storePackage.FullName
+            "release/MorphTerm-windows-store.sha256"
+          )
+
+          if ($portable) {
+            $assets += $portable.FullName
+            $assets += "release/MorphTerm-windows-portable.sha256"
+          }
+
+          $releaseArgs = @(
+            "release"
+            "create"
+            "${{ github.ref_name }}"
+          ) + $assets + @(
+            "--title"
+            "${{ github.ref_name }}"
+            "--generate-notes"
+            "--verify-tag"
+          )
+
+          gh @releaseArgs
