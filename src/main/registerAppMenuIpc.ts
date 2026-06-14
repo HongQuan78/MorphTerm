@@ -3,7 +3,7 @@ import { assertTrustedIpcSender } from "./ipcValidation";
 import { appMenuChannels, isAppMenuAction } from "../shared/appMenuIpc";
 import type { AppMenuAction } from "../shared/appMenuIpc";
 
-export function registerAppMenuIpc(projectGitHubUrl: string): void {
+export function registerAppMenuIpc(feedbackFormUrl: string): void {
   ipcMain.handle(appMenuChannels.performAction, async (event, action) => {
     assertTrustedIpcSender(event);
 
@@ -15,13 +15,13 @@ export function registerAppMenuIpc(projectGitHubUrl: string): void {
       return;
     }
 
-    await performAppMenuAction(action, projectGitHubUrl);
+    await performAppMenuAction(action, feedbackFormUrl);
   });
 }
 
 async function performAppMenuAction(
   action: AppMenuAction,
-  projectGitHubUrl: string
+  feedbackFormUrl: string
 ): Promise<void> {
   const window = BrowserWindow.getFocusedWindow();
   const webContents = window?.webContents;
@@ -75,8 +75,8 @@ async function performAppMenuAction(
     case "close":
       window?.close();
       return;
-    case "openGitHub":
-      await openExternalHttpUrl(projectGitHubUrl);
+    case "openFeedback":
+      await openExternalHttpUrl(feedbackFormUrl);
       return;
   }
 }

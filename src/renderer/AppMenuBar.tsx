@@ -60,7 +60,7 @@ const menus: MenuDefinition[] = [
   {
     label: "Help",
     items: [
-      { label: "MorphTerm GitHub", action: "openGitHub" }
+      { label: "Send Feedback", action: "openFeedback" }
     ]
   }
 ];

@@ -14,7 +14,7 @@ import {
   rendererDevUrl
 } from "./rendererTrust";
 
-const projectGitHubUrl = "https://github.com/HongQuan78/MorphTerm";
+const feedbackFormUrl = "https://forms.gle/VMnbR2NDTcXtr24N7";
 let configManager: ConfigManager;
 let terminalManager: TerminalManager;
 let configPath: string | undefined;
@@ -126,7 +126,7 @@ app.on("ready", () => {
   );
   configManager.load();
   terminalManager = new TerminalManager(() => configManager.get());
-  registerAppMenuIpc(projectGitHubUrl);
+  registerAppMenuIpc(feedbackFormUrl);
   registerConfigIpc(configManager);
   registerTerminalIpc(terminalManager);
   app.applicationMenu = null;
