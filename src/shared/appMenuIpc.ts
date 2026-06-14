@@ -19,7 +19,7 @@ export const appMenuActions = [
   "toggleFullscreen",
   "minimize",
   "close",
-  "openGitHub"
+  "openFeedback"
 ] as const;
 
 export type AppMenuAction = (typeof appMenuActions)[number];
