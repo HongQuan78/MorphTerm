@@ -49,7 +49,7 @@ async function main() {
 }
 
 async function runShellSmoke(shell) {
-  console.log(`Testing ${shell.name} through ConPTY...`);
+  console.log(`Testing ${shell.name} through ConPTY DLL...`);
 
   const terminal = pty.spawn(shell.file, shell.args, {
     name: "xterm-256color",
@@ -61,7 +61,8 @@ async function runShellSmoke(shell) {
       TERM: process.env.TERM || "xterm-256color",
       COLORTERM: process.env.COLORTERM || "truecolor"
     },
-    useConpty: true
+    useConpty: true,
+    useConptyDll: true
   });
   let output = "";
   const dataSubscription = terminal.onData((data) => {
@@ -91,7 +92,7 @@ async function runShellSmoke(shell) {
     );
     await waitForOutput(
       () => output,
-      /\x1b\[31mMORPH_ANSI/,
+      /\x1b\[(?:0;)?31mMORPH_ANSI/,
       `${shell.name} ANSI`
     );
     await delay(250);

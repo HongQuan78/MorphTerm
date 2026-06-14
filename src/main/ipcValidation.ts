@@ -1,7 +1,6 @@
 import type { IpcMainInvokeEvent } from "electron";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { MorphTermConfigUpdate } from "../shared/config/config-types";
+import { isPackagedRendererIndexUrl, rendererDevUrl } from "./rendererTrust";
 import type {
   TerminalAttachRequest,
   TerminalCreateRequest,
@@ -13,7 +12,6 @@ import type {
 const maxTerminalInputLength = 64 * 1024;
 const maxTerminalColumns = 500;
 const maxTerminalRows = 200;
-const rendererDevUrl = "http://127.0.0.1:5173";
 
 export function assertTrustedIpcSender(event: IpcMainInvokeEvent): void {
   const senderFrame = event.senderFrame;
@@ -36,36 +34,14 @@ export function isTrustedIpcSenderUrl(
   isPackaged = isPackagedRuntime()
 ): boolean {
   if (isPackaged) {
-    return isPackagedRendererUrl(frameUrl);
+    return isPackagedRendererIndexUrl(frameUrl);
   }
 
   return (
-    isPackagedRendererUrl(frameUrl) ||
+    isPackagedRendererIndexUrl(frameUrl) ||
     frameUrl === rendererDevUrl ||
     frameUrl.startsWith(`${rendererDevUrl}/`)
   );
-}
-
-function isPackagedRendererUrl(frameUrl: string): boolean {
-  let framePath: string;
-
-  try {
-    const url = new URL(frameUrl);
-
-    if (url.protocol !== "file:") {
-      return false;
-    }
-
-    framePath = fileURLToPath(url);
-  } catch {
-    return false;
-  }
-
-  return path.resolve(framePath) === getPackagedRendererIndexPath();
-}
-
-function getPackagedRendererIndexPath(): string {
-  return path.resolve(__dirname, "../renderer/index.html");
 }
 
 function isPackagedRuntime(): boolean {
