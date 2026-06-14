@@ -1,15 +1,17 @@
 {
   "name": "morphterm",
   "version": "0.1.0",
-  "description": "An open-source customizable desktop terminal inspired by Hyper.",
+  "description": "customizable desktop terminal",
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && tsc -p tsconfig.electron.json && electron .",
-    "build": "tsc -p tsconfig.electron.json && vite build",
+    "build": "node scripts/clean-build-output.cjs && tsc -p tsconfig.electron.json && vite build",
     "dist:win": "npm run build && electron-builder --win portable --config.win.signAndEditExecutable=false",
+    "dist:win:msi": "npm run build && electron-builder --win msi --config electron-builder.msi.cjs",
     "dist:win:release": "npm run build && electron-builder --win portable --config electron-builder.release.cjs",
+    "dist:win:store": "npm run build && electron-builder --win appx --config electron-builder.store.cjs",
     "smoke:terminal:windows": "node scripts/smoke-terminal-windows.cjs",
     "test": "tsc -p tsconfig.test.json && node scripts/run-node-tests.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.electron.json && tsc --noEmit -p tsconfig.renderer.json"
@@ -20,18 +22,27 @@
     "react",
     "typescript"
   ],
-  "author": "",
+  "author": {
+    "name": "hqdev"
+  },
   "license": "MIT",
   "build": {
     "appId": "com.morphterm.app",
     "productName": "MorphTerm",
-    "files": [
-      "dist/**/*",
-      "package.json",
-      "!node_modules/node-pty/prebuilds/darwin-*/**/*",
-      "!node_modules/node-pty/prebuilds/win32-arm64/**/*",
-      "!node_modules/node-pty/prebuilds/**/*.pdb",
-      "!node_modules/node-pty/third_party/**/*"
+      "files": [
+        "dist/**/*",
+        "package.json",
+        "!dist/**/*.tsbuildinfo",
+        "!node_modules/node-pty/prebuilds/darwin-*/**/*",
+        "!node_modules/node-pty/prebuilds/win32-arm64/**/*",
+        "!node_modules/node-pty/prebuilds/**/*.pdb",
+        "!node_modules/node-pty/third_party/**/*",
+        "!node_modules/node-pty/deps/**/*",
+        "!node_modules/node-pty/scripts/**/*",
+        "!node_modules/node-pty/src/**/*",
+        "!node_modules/node-pty/**/*.map",
+        "!node_modules/node-pty/**/*.{md,ts}",
+        "!node_modules/node-addon-api/**/*"
     ],
     "asar": true,
     "asarUnpack": [
@@ -53,14 +64,12 @@
     }
   },
   "dependencies": {
-    "@xterm/addon-fit": "^0.11.0",
-    "@xterm/xterm": "^6.0.0",
-    "node-pty": "^1.1.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "node-pty": "^1.1.0"
   },
   "devDependencies": {
     "@electron/fuses": "^1.8.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -68,6 +77,8 @@
     "concurrently": "^9.1.0",
     "electron": "^42.4.0",
     "electron-builder": "^26.15.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "typescript": "^5.6.3",
     "vite": "^8.0.16",
     "wait-on": "^8.0.1"
