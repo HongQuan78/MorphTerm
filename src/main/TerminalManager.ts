@@ -155,12 +155,20 @@ export class TerminalManager {
       throw new Error(`Terminal session not owned by caller: ${id}`);
     }
 
-    session.dataSubscription.dispose();
-    session.exitSubscription.dispose();
-    if (killProcess) {
-      session.process.kill();
-    }
     this.sessions.delete(id);
+
+    safelyDisposeTerminalResource(id, "data subscription", () => {
+      session.dataSubscription.dispose();
+    });
+    safelyDisposeTerminalResource(id, "exit subscription", () => {
+      session.exitSubscription.dispose();
+    });
+
+    if (killProcess) {
+      safelyDisposeTerminalResource(id, "process", () => {
+        session.process.kill();
+      });
+    }
   }
 
   private getSession(id: string): TerminalSession {
@@ -312,4 +320,19 @@ function appendHistory(history: string, data: string): string {
   }
 
   return nextHistory.slice(nextHistory.length - maxSessionHistoryLength);
+}
+
+function safelyDisposeTerminalResource(
+  sessionId: string,
+  resourceName: string,
+  dispose: () => void
+): void {
+  try {
+    dispose();
+  } catch (error) {
+    console.warn(
+      `Failed to dispose terminal ${resourceName} for session ${sessionId}`,
+      error
+    );
+  }
 }
