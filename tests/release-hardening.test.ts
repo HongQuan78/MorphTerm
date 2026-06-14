@@ -95,7 +95,7 @@ describe("release hardening configuration", () => {
     );
   });
 
-  it("defines a Microsoft Store MSI installer build path", () => {
+  it("defines a local MSI installer build path", () => {
     assert.equal(
       packageJson.scripts?.["dist:win:msi"],
       "npm run build && electron-builder --win msi --config electron-builder.msi.cjs"
@@ -140,9 +140,12 @@ describe("release hardening configuration", () => {
     assert.match(releaseWorkflow, /attestations: write/);
     assert.match(releaseWorkflow, /id-token: write/);
     assert.match(releaseWorkflow, /subject-path: release\/MorphTerm-\*\.exe/);
+    assert.match(releaseWorkflow, /subject-path: release\/MorphTerm-\*\.appx/);
     assert.match(releaseWorkflow, /Get-FileHash -Algorithm SHA256/);
     assert.match(releaseWorkflow, /Get-ChildItem -Path release -Filter "MorphTerm-\*\.exe"/);
+    assert.match(releaseWorkflow, /Get-ChildItem -Path release -Filter "MorphTerm-\*\.appx"/);
     assert.match(releaseWorkflow, /release\/MorphTerm-windows-portable\.sha256/);
+    assert.match(releaseWorkflow, /release\/MorphTerm-windows-store\.sha256/);
     assert.match(releaseWorkflow, /gh release create "\$\{\{ github\.ref_name \}\}"/);
     assert.match(releaseWorkflow, /--generate-notes/);
     assert.match(releaseWorkflow, /--verify-tag/);

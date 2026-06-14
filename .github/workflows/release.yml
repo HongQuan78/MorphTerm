@@ -54,6 +54,18 @@ jobs:
             } |
             Set-Content -Path release/MorphTerm-windows-portable.sha256 -Encoding ascii
 
+      - name: Build Microsoft Store package
+        run: npm run dist:win:store
+
+      - name: Generate Microsoft Store package checksum
+        shell: pwsh
+        run: |
+          Get-FileHash -Algorithm SHA256 release/MorphTerm-*.appx |
+            ForEach-Object {
+              "{0}  {1}" -f $_.Hash.ToLowerInvariant(), (Split-Path $_.Path -Leaf)
+            } |
+            Set-Content -Path release/MorphTerm-windows-store.sha256 -Encoding ascii
+
       - name: Upload signed Windows portable artifact
         uses: actions/upload-artifact@v4
         with:
@@ -63,10 +75,24 @@ jobs:
             release/MorphTerm-windows-portable.sha256
           if-no-files-found: error
 
+      - name: Upload Microsoft Store package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: morphterm-windows-store-appx
+          path: |
+            release/MorphTerm-*.appx
+            release/MorphTerm-windows-store.sha256
+          if-no-files-found: error
+
       - name: Attest signed Windows portable provenance
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: release/MorphTerm-*.exe
+
+      - name: Attest Microsoft Store package provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/MorphTerm-*.appx
 
       - name: Publish GitHub Release
         if: github.ref_type == 'tag'
@@ -75,14 +101,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $portable = Get-ChildItem -Path release -Filter "MorphTerm-*.exe" | Select-Object -First 1
+          $storePackage = Get-ChildItem -Path release -Filter "MorphTerm-*.appx" | Select-Object -First 1
 
           if (-not $portable) {
             throw "No MorphTerm portable executable found in release/."
           }
 
+          if (-not $storePackage) {
+            throw "No MorphTerm Microsoft Store package found in release/."
+          }
+
           gh release create "${{ github.ref_name }}" `
             $portable.FullName `
             release/MorphTerm-windows-portable.sha256 `
+            $storePackage.FullName `
+            release/MorphTerm-windows-store.sha256 `
             --title "${{ github.ref_name }}" `
             --generate-notes `
             --verify-tag

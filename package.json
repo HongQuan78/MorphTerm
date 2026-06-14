@@ -1,6 +1,6 @@
 {
   "name": "morphterm",
-  "version": "0.1.0",
+  "version": "0.1.0-build2",
   "description": "customizable desktop terminal",
   "main": "dist/main/main.js",
   "scripts": {
@@ -29,20 +29,20 @@
   "build": {
     "appId": "com.morphterm.app",
     "productName": "MorphTerm",
-      "files": [
-        "dist/**/*",
-        "package.json",
-        "!dist/**/*.tsbuildinfo",
-        "!node_modules/node-pty/prebuilds/darwin-*/**/*",
-        "!node_modules/node-pty/prebuilds/win32-arm64/**/*",
-        "!node_modules/node-pty/prebuilds/**/*.pdb",
-        "!node_modules/node-pty/third_party/**/*",
-        "!node_modules/node-pty/deps/**/*",
-        "!node_modules/node-pty/scripts/**/*",
-        "!node_modules/node-pty/src/**/*",
-        "!node_modules/node-pty/**/*.map",
-        "!node_modules/node-pty/**/*.{md,ts}",
-        "!node_modules/node-addon-api/**/*"
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!dist/**/*.tsbuildinfo",
+      "!node_modules/node-pty/prebuilds/darwin-*/**/*",
+      "!node_modules/node-pty/prebuilds/win32-arm64/**/*",
+      "!node_modules/node-pty/prebuilds/**/*.pdb",
+      "!node_modules/node-pty/third_party/**/*",
+      "!node_modules/node-pty/deps/**/*",
+      "!node_modules/node-pty/scripts/**/*",
+      "!node_modules/node-pty/src/**/*",
+      "!node_modules/node-pty/**/*.map",
+      "!node_modules/node-pty/**/*.{md,ts}",
+      "!node_modules/node-addon-api/**/*"
     ],
     "asar": true,
     "asarUnpack": [
